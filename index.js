@@ -431,6 +431,27 @@ export async function apply(ctx, config) {
     }
   }
 
+  /** 当前可用的 Agent 模式（preset）列表，供面板选择。 */
+  async function presetCatalog() {
+    const presets = ctx.get('agentPresets')
+    if (!presets || typeof presets.list !== 'function') return null
+    try {
+      const list = await presets.list()
+      return list
+        .filter(preset => preset && typeof preset.id === 'string' && preset.id !== '')
+        .map(preset => ({
+          id: preset.id,
+          name: typeof preset.name === 'string' && preset.name !== '' ? preset.name : preset.id,
+          description: typeof preset.description === 'string' ? preset.description : '',
+          order: Number.isFinite(preset.order) ? Number(preset.order) : 0,
+          broken: preset.broken !== undefined,
+        }))
+        .sort((left, right) => left.order - right.order)
+    } catch {
+      return null
+    }
+  }
+
   /** 给某个成员换模型（只写该会话，不动全局默认）。 */
   async function selectMemberModel(member, provider, model, reasoningEffort, signal) {
     const controller = ctx.get('sessionController')
@@ -793,7 +814,10 @@ export async function apply(ctx, config) {
       const name = String(row?.name ?? '').trim() || `成员 ${team.members.length + index + 1}`
       const role = String(row?.role ?? '').trim()
       const stage = Number.isFinite(row?.stage) ? Number(row.stage) : team.members.length + index + 1
-      const value = await controller.create({ cwd })
+      const value = await controller.create({
+        cwd,
+        ...(typeof row?.agentPreset === 'string' && row.agentPreset !== '' ? { agentPreset: row.agentPreset } : {}),
+      })
       const sessionId = value.sessionId
       let modelError = ''
       if (typeof row?.provider === 'string' && row.provider !== ''
@@ -1501,6 +1525,7 @@ export async function apply(ctx, config) {
           defaultCwd,
           workspaces,
           models,
+          presets: await presetCatalog(),
           sessions: await sessionCatalog(signal, probe === true),
           creations: {
             canCreate: typeof ctx.get('sessionController')?.create === 'function',

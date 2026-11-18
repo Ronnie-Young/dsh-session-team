@@ -22,7 +22,12 @@ async function harness(configInput, options = {}) {
   let savedConfig = null
 
   const selections = new Map()
+  const createdRequests = []
   let createdSessions = 0
+  const presetList = [
+    { id: 'ptc', name: 'PTC 模式', order: 2 },
+    { id: 'standard', name: '标准模式', order: 1 },
+  ]
   const catalog = {
     default: { provider: 'p1', model: 'm1' },
     routableProviders: ['p1'],
@@ -51,7 +56,8 @@ async function harness(configInput, options = {}) {
           : {},
       }
     },
-    async create() {
+    async create(request = {}) {
+      createdRequests.push(request)
       createdSessions += 1
       return { sessionId: `session-new-${createdSessions}` }
     },
@@ -129,6 +135,7 @@ async function harness(configInput, options = {}) {
       if (name === 'sessionController') return controller
       if (name === 'configEditor') return exposeEditor ? editor : undefined
       if (name === 'webServer') return webServer
+      if (name === 'agentPresets') return { async list() { return presetList } }
       return undefined
     },
     effect(fn) {
@@ -189,6 +196,7 @@ async function harness(configInput, options = {}) {
     ledgerFile: join(stateDir, 'ledger.json'),
     registrations,
     selections,
+    createdRequests,
     prompts,
     tools,
     routes,
@@ -622,6 +630,35 @@ test('已有团队中可以新建智能体角色（等价于新建 session）', 
   const saved = await h.readTeams()
   assert.equal(saved.teams[0].cwd, '/tmp/proj')
   assert.equal(saved.teams[0].members.length, 5)
+})
+
+test('新建成员时可选择 Agent 模式，状态里暴露模式目录', async () => {
+  const h = await harness({ ...TEAM, deliverOnIdle: false })
+  const state = await h.callRoute('/session-team/state')
+  assert.equal(state.presets.length, 2)
+  assert.equal(state.presets[0].id, 'standard')
+  assert.equal(state.presets[1].id, 'ptc')
+
+  await h.callRoute('/session-team/action', {
+    method: 'POST',
+    body: {
+      kind: 'create-team',
+      name: 'M',
+      cwd: '/tmp/m',
+      members: [
+        { name: 'lead', lead: true, agentPreset: 'standard' },
+        { name: 'dev', agentPreset: 'ptc' },
+      ],
+    },
+  })
+  assert.equal(h.createdRequests[0].agentPreset, 'standard')
+  assert.equal(h.createdRequests[1].agentPreset, 'ptc')
+
+  await h.callRoute('/session-team/action', {
+    method: 'POST',
+    body: { kind: 'create-members', cwd: '/tmp/m', items: [{ name: 'qa', agentPreset: 'standard' }] },
+  })
+  assert.equal(h.createdRequests[2].agentPreset, 'standard')
 })
 
 test('未知操作返回错误而不是抛出面板路由', async () => {
