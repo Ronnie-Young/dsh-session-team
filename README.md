@@ -21,11 +21,11 @@ DSH 自带的 `subagent` / Team 任务板是“当前会话的子代理”。这
 | 方式 | target | 说明 |
 | --- | --- | --- |
 | **插件市场**（发现页） | 先在「发现 → 管理索引源」添加 `https://ronnie-young.github.io/dsh-plugins-market/index.json`，再在市场里搜索 `session-team` 安装 | 收录在 [dsh-plugins-market](https://github.com/Ronnie-Young/dsh-plugins-market) |
-| **GitHub 源**（免 clone） | `github:Ronnie-Young/dsh-session-team#v0.0.1` | pnpm 直接拉取 |
-| **Release 压缩包** | `https://github.com/Ronnie-Young/dsh-session-team/releases/download/v0.0.1/dsh-session-team-0.0.1.tgz` | 从 GitHub Release 直链安装 |
+| **GitHub 源**（免 clone） | `github:Ronnie-Young/dsh-session-team#v0.0.2` | pnpm 直接拉取 |
+| **Release 压缩包** | `https://github.com/Ronnie-Young/dsh-session-team/releases/download/v0.0.2/dsh-session-team-0.0.2.tgz` | 从 GitHub Release 直链安装 |
 | 本地目录（开发/排错） | `/你的路径/dsh-session-team` | 先 `git clone` |
 
-> 安装会申请 danger-full-access 权限，按提示批准。版本号在面板底部显示（`dsh-session-team v0.0.1`）。
+> 安装会申请 danger-full-access 权限，按提示批准。版本号在面板底部显示（`dsh-session-team v0.0.2`）。
 
 ## 用法
 
@@ -60,7 +60,7 @@ CI：`.github/workflows/ci.yml`（push/PR 跑语法检查 + JSON 校验 + 测试
 
 ## 版本
 
-当前 **0.0.1**。版本号由作者（用户）决定：**未经用户明确同意不要修改**。
+当前 **0.0.2**。版本号由作者（用户）决定：**未经用户明确同意不要修改**。
 变更记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## License
