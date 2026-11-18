@@ -1,0 +1,16 @@
+# dsh-session-team bundle layer.
+#
+# 默认**不预置任何团队或会话**：安装后在侧栏「项目团队」里新建项目团队，
+# 或把已有会话加入团队。团队与台账都保存在插件自己的数据目录：
+#   $DSH_HOME/session-team/teams.json   团队清单
+#   $DSH_HOME/session-team/ledger.json  派活台账与未送达汇报
+#
+# 需要改默认配置（例如新团队默认名）时，在 profile 自己的 cordis.patch.yml 里写
+# （patch 会整体替换 config，所以要保留的键一并写上）：
+#
+#   - id: session-team
+#     config:
+#       teamName: 我的团队
+- insert:
+    - id: session-team
+      name: dsh-session-team

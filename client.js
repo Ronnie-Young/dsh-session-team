@@ -1,0 +1,1058 @@
+// dsh-session-team — BROWSER half（浏览器端插件）。
+//
+// 两层界面：
+//   1. 团队列表：像侧栏的「工作区」列表一样，列出所有项目团队（人数、Lead、运行数、未完成任务），
+//      顶部可以「新建项目团队」；
+//   2. 团队详情：选中某个团队后，看成员状态、改模型、派活、看任务与恢复、读汇报。
+//
+// 数据来自 Host 的 `GET /session-team/state` 与 `POST /session-team/action`；
+// 浏览器 loader 按 npm 包名期待注册，所以下面 id 必须等于包名。
+window.__ModuleLoader__.load({
+  id: 'dsh-session-team',
+  factory: (require) => {
+    const React = require('react')
+    const { useEffect, useState } = React
+    const h = React.createElement
+
+    const NS = 'session-team'
+    const ROUTE = '/session-team'
+    const PANEL_KEY = 'session-team'
+
+    const zh = {
+      panelLabel: '项目团队',
+      title: '项目团队',
+      subtitle: '按项目组织会话团队：一个 Lead，多名成员，ordered 汇报',
+      noTeams: '还没有团队。新建一个项目团队开始：填工作目录、Lead 与成员。',
+      newTeam: '新建项目团队',
+      teams: '团队',
+      members: '成员',
+      lead: 'Lead',
+      openTeam: '打开',
+      back: '返回团队列表',
+      refresh: '刷新',
+      flush: '立即投递',
+      briefing: '生成 Lead 说明',
+      pending: '待读汇报',
+      openTasks: '未完成任务',
+      addMember: '从已有会话加入',
+      cancel: '收起',
+      search: '搜索标题 / 目录 / session id',
+      addSelected: '加入团队',
+      manualAdd: '或粘贴 session id',
+      manualPlaceholder: 'session-xxxx',
+      add: '加入',
+      remove: '移除',
+      open: '打开',
+      role: '角色/模型',
+      setLead: '设为 Lead',
+      roleLabel: '角色',
+      stage: '阶段',
+      rolePlaceholder: '例如 backend',
+      save: '保存',
+      statusRunning: '运行中',
+      statusIdle: '空闲',
+      statusInput: '等待你处理',
+      statusOff: '未激活',
+      unread: '未读',
+      taskTitle: '给成员派活',
+      target: '对象',
+      all: '所有非 Lead 成员',
+      taskPlaceholder: '写清任务目标、验收标准和落盘位置…',
+      mode: '投递方式',
+      modeQueue: '排队（等当前回合结束）',
+      modeSteer: '插入（并入当前回合）',
+      send: '发送',
+      sending: '发送中…',
+      reports: '汇报',
+      noReports: '还没有汇报。',
+      delivered: '已送达',
+      queued: '排队中',
+      readonly: '',
+      model: '模型',
+      modelDefault: '默认模型',
+      modelDefaultLabel: '默认：{name}',
+      modelSaveFailed: '切换模型失败',
+      modelSaved: '已切换 {name} → {label}（下一回合生效）',
+      effort: '推理强度',
+      effortDefault: '默认强度',
+      defaultModel: '默认模型 {name}',
+      tasks: '任务与恢复',
+      tasksOpen: '{n} 项未完成',
+      noTasks: '还没有派发记录。',
+      taskRunning: '进行中',
+      taskStale: '待恢复',
+      taskDone: '已完成',
+      taskBlocked: '已阻塞',
+      recover: '恢复',
+      recoverAll: '恢复未完成',
+      recovered: '已给 {name} 发送恢复提示',
+      recoveredNone: '没有需要恢复的任务',
+      taskDispatchedAt: '{time} 派发',
+      taskResumed: '已恢复 {n} 次',
+      createTitle: '新建项目团队',
+      createHint: '为这个项目新建 Lead 和成员会话；模型在这里一并选好，之后还能改。',
+      createExpand: '展开',
+      createCollapse: '收起',
+      cwd: '工作目录',
+      cwdHint: '绝对路径；新建的会话都属于这个目录',
+      teamNameInput: '团队名',
+      memberName: '名称',
+      addRow: '添加一行',
+      removeRow: '删除',
+      createBtn: '创建团队',
+      creating: '创建中…',
+      created: '已创建 {n} 个会话',
+      createFailed: '创建团队失败',
+      openExisting: '从已有会话加入',
+      noModelCatalog: '没读到模型目录，先按默认模型创建',
+      deleteTeam: '删除团队',
+      deleteConfirm: '删除这个团队？只会移除名单，不会删除会话。',
+      rename: '重命名',
+      injected: '已加入 {n} 人'
+    }
+
+    const en = {
+      panelLabel: 'Project teams',
+      title: 'Project teams',
+      subtitle: 'Organize sessions into per-project teams: one Lead, several members, ordered reports',
+      noTeams: 'No teams yet. Create one: pick a working directory, a Lead and members.',
+      newTeam: 'New project team',
+      teams: 'Teams',
+      members: 'Members',
+      lead: 'Lead',
+      openTeam: 'Open',
+      back: 'Back to teams',
+      refresh: 'Refresh',
+      flush: 'Deliver now',
+      briefing: 'Brief the Lead',
+      pending: 'Unread reports',
+      openTasks: 'Open tasks',
+      addMember: 'Add existing sessions',
+      cancel: 'Close',
+      search: 'Search title / cwd / session id',
+      addSelected: 'Add to team',
+      manualAdd: 'Or paste a session id',
+      manualPlaceholder: 'session-xxxx',
+      add: 'Add',
+      remove: 'Remove',
+      open: 'Open',
+      role: 'Role / model',
+      setLead: 'Set lead',
+      roleLabel: 'Role',
+      stage: 'Stage',
+      rolePlaceholder: 'e.g. backend',
+      save: 'Save',
+      statusRunning: 'Running',
+      statusIdle: 'Idle',
+      statusInput: 'Needs you',
+      statusOff: 'Inactive',
+      unread: 'unread',
+      taskTitle: 'Assign work',
+      target: 'Target',
+      all: 'All non-Lead members',
+      taskPlaceholder: 'Goal, acceptance criteria, where results go…',
+      mode: 'Delivery',
+      modeQueue: 'Queue (after the current turn)',
+      modeSteer: 'Steer (join the current turn)',
+      send: 'Send',
+      sending: 'Sending…',
+      reports: 'Reports',
+      noReports: 'No reports yet.',
+      delivered: 'delivered',
+      queued: 'queued',
+      readonly: '',
+      model: 'Model',
+      modelDefault: 'Default model',
+      modelDefaultLabel: 'Default: {name}',
+      modelSaveFailed: 'Model switch failed',
+      modelSaved: 'Switched {name} → {label} (from its next turn)',
+      effort: 'Reasoning',
+      effortDefault: 'Default effort',
+      defaultModel: 'Default model {name}',
+      tasks: 'Assignments & recovery',
+      tasksOpen: '{n} open',
+      noTasks: 'No assignments yet.',
+      taskRunning: 'Running',
+      taskStale: 'Needs recovery',
+      taskDone: 'Done',
+      taskBlocked: 'Blocked',
+      recover: 'Recover',
+      recoverAll: 'Recover open',
+      recovered: 'Recovery prompt sent to {name}',
+      recoveredNone: 'Nothing to recover',
+      taskDispatchedAt: 'dispatched {time}',
+      taskResumed: 'resumed {n}×',
+      createTitle: 'New project team',
+      createHint: 'Create fresh Lead and member sessions for this project, with models chosen here (editable later).',
+      createExpand: 'Expand',
+      createCollapse: 'Collapse',
+      cwd: 'Working directory',
+      cwdHint: 'Absolute path; the new sessions belong to it',
+      teamNameInput: 'Team name',
+      memberName: 'Name',
+      addRow: 'Add row',
+      removeRow: 'Remove',
+      createBtn: 'Create team',
+      creating: 'Creating…',
+      created: 'Created {n} sessions',
+      createFailed: 'Create team failed',
+      openExisting: 'Add existing sessions',
+      noModelCatalog: 'No model catalog; using the default model',
+      deleteTeam: 'Delete team',
+      deleteConfirm: 'Delete this team? Roster only — sessions are not deleted.',
+      rename: 'Rename',
+      injected: 'Added {n} members'
+    }
+
+    let boundT = null
+    function t(key, params) {
+      let text = typeof boundT === 'function' ? boundT(key) : key
+      if (typeof text !== 'string') text = key
+      if (params) {
+        for (const [name, value] of Object.entries(params)) text = text.split(`{${name}}`).join(String(value))
+      }
+      return text
+    }
+
+    const CSS = `
+.stm-page{height:100%;overflow:auto;padding:24px 30px 48px;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);box-sizing:border-box}
+.stm-wrap{max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.stm-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.stm-title{margin:0;font-size:20px;font-weight:600;line-height:1.3}
+.stm-sub{margin:6px 0 0;font-size:13px;color:var(--dsw-alias-label-secondary)}
+.stm-actions{display:flex;flex-wrap:wrap;gap:8px;flex:none}
+.stm-btn{height:30px;padding:0 12px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.stm-btn:hover:not(:disabled){border-color:var(--dsw-alias-border-l2)}
+.stm-btn:disabled{opacity:.55;cursor:default}
+.stm-btn-primary{border-color:transparent;background:var(--dsw-alias-brand-primary);color:var(--dsw-alias-bg-base)}
+.stm-btn-ghost{height:26px;padding:0 8px;font-size:12px;background:transparent}
+.stm-card{border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);border-radius:14px;padding:16px 18px}
+.stm-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.stm-row:last-child{border-bottom:0}
+.stm-row-click{cursor:pointer}
+.stm-row-click:hover .stm-name{color:var(--dsw-alias-brand-primary)}
+.stm-dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--dsw-alias-state-idle-primary)}
+.stm-dot-running{background:var(--dsw-alias-state-success-primary)}
+.stm-dot-input{background:var(--dsw-alias-state-warn-primary)}
+.stm-dot-off{background:var(--dsw-alias-border-l2)}
+.stm-name{font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stm-chip{font-size:11px;font-weight:400;padding:2px 7px;border-radius:999px;border:1px solid var(--dsw-alias-border-l1);color:var(--dsw-alias-label-secondary);white-space:nowrap}
+.stm-chip-lead{border-color:transparent;background:color-mix(in srgb,var(--dsw-alias-brand-primary) 14%,transparent);color:var(--dsw-alias-brand-primary)}
+.stm-chip-warn{border-color:transparent;background:color-mix(in srgb,var(--dsw-alias-state-warn-primary) 14%,transparent);color:var(--dsw-alias-state-warn-primary)}
+.stm-meta{font-size:12px;color:var(--dsw-alias-label-secondary);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stm-grow{flex:1;min-width:0}
+.stm-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--dsw-alias-label-secondary);cursor:pointer;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stm-section-title{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--dsw-alias-label-secondary)}
+.stm-input, .stm-select, .stm-textarea{width:100%;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);border-radius:8px;font-size:13px;padding:8px 10px;font-family:inherit}
+.stm-textarea{min-height:88px;resize:vertical;line-height:1.6}
+.stm-inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stm-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--dsw-alias-label-secondary)}
+.stm-notice{font-size:12px;line-height:1.6;color:var(--dsw-alias-label-secondary);padding:8px 12px;border-radius:8px;background:var(--dsw-alias-bg-layer-2)}
+.stm-notice-error{color:var(--dsw-alias-state-error-primary)}
+.stm-report{border-bottom:1px solid var(--dsw-alias-border-l1);padding:8px 0;font-size:12px;line-height:1.6}
+.stm-report:last-child{border-bottom:0}
+.stm-report-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--dsw-alias-label-secondary)}
+.stm-report-subject{font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary)}
+.stm-report-body{margin-top:4px;color:var(--dsw-alias-label-secondary);white-space:pre-wrap}
+.stm-candidate{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.stm-candidate:last-child{border-bottom:0}
+.stm-candidate-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stm-candidate-cwd{font-size:11px;color:var(--dsw-alias-label-secondary)}
+.stm-icon{position:relative;display:inline-flex;align-items:center;justify-content:center;color:currentColor}
+.stm-icon-badge{position:absolute;top:-1px;right:-2px;width:7px;height:7px;border-radius:50%;background:var(--dsw-alias-state-warn-primary);box-shadow:0 0 0 2px var(--dsw-alias-bg-base)}
+.stm-empty{font-size:13px;color:var(--dsw-alias-label-secondary);padding:12px 0}
+.stm-hint{font-size:11px;color:var(--dsw-alias-label-secondary)}
+`
+
+    function installStyles() {
+      const style = document.createElement('style')
+      style.id = 'stm-styles'
+      style.textContent = CSS
+      document.head.appendChild(style)
+      return () => style.remove()
+    }
+
+    // ---- 共享状态 ----
+    const store = {
+      state: null,
+      error: null,
+      loading: true,
+      listeners: new Set(),
+      refs: 0,
+      timer: null,
+      set(patch) {
+        Object.assign(this, patch)
+        for (const listener of this.listeners) listener()
+      }
+    }
+
+    let openSession = null
+
+    function usePolling() {
+      useEffect(() => {
+        store.refs += 1
+        if (store.refs === 1) {
+          if (store.state === null) refresh()
+          store.timer = setInterval(refresh, 3000)
+        }
+        return () => {
+          store.refs -= 1
+          if (store.refs <= 0 && store.timer !== null) {
+            clearInterval(store.timer)
+            store.timer = null
+          }
+        }
+      }, [])
+    }
+
+    function useStore() {
+      const [, force] = useState(0)
+      useEffect(() => {
+        const listener = () => force(value => value + 1)
+        store.listeners.add(listener)
+        return () => store.listeners.delete(listener)
+      }, [])
+      return store
+    }
+
+    async function refresh() {
+      try {
+        const response = await fetch(`${ROUTE}/state`, { headers: { accept: 'application/json' } })
+        const body = await response.json()
+        store.set({ state: body, error: null, loading: false })
+      } catch (error) {
+        store.set({ error: String(error), loading: false })
+      }
+    }
+
+    async function act(body) {
+      try {
+        const response = await fetch(`${ROUTE}/action`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body)
+        })
+        const payload = await response.json()
+        await refresh()
+        return payload
+      } catch (error) {
+        return { ok: false, error: String(error) }
+      }
+    }
+
+    function withTeam(state, body) {
+      return { ...body, teamId: state?.activeTeamId ?? '' }
+    }
+
+    // ---- 小组件 ----
+    function Button({ children, onClick, disabled, primary, ghost }) {
+      const className = `stm-btn${primary ? ' stm-btn-primary' : ''}${ghost ? ' stm-btn-ghost' : ''}`
+      return h('button', { type: 'button', className, onClick, disabled: disabled === true }, children)
+    }
+
+    function statusOf(member) {
+      if (Array.isArray(member.pendingInput) && member.pendingInput.length > 0) {
+        return { kind: 'input', label: t('statusInput') }
+      }
+      if (member.running) return { kind: 'running', label: t('statusRunning') }
+      if (member.active) return { kind: 'idle', label: t('statusIdle') }
+      return { kind: 'off', label: t('statusOff') }
+    }
+
+    function copyText(text) {
+      try {
+        navigator.clipboard.writeText(text)
+      } catch { /* 忽略 */ }
+    }
+
+    /** 把 state.models 展平成下拉项。 */
+    function modelOptions(models) {
+      const rows = []
+      for (const provider of models?.providers ?? []) {
+        for (const model of provider.models ?? []) {
+          rows.push({
+            key: `${provider.id}\u0001${model.id}`,
+            provider: provider.id,
+            providerName: provider.name,
+            model: model.id,
+            name: model.name,
+            efforts: model.efforts ?? [],
+            defaultEffort: model.defaultEffort ?? ''
+          })
+        }
+      }
+      return rows
+    }
+
+    /** 侧栏图标。 */
+    function PanelIcon(props) {
+      const size = props && typeof props.size === 'number' ? props.size : 18
+      const snapshot = useStore()
+      usePolling()
+      const pending = (snapshot.state?.teams ?? []).reduce((sum, team) => sum + (team.pendingReports ?? 0), 0)
+      return h(
+        'span',
+        { className: 'stm-icon', title: t('panelLabel') },
+        h('svg', { width: size, height: size, viewBox: '0 0 36 36', fill: 'none', 'aria-hidden': 'true' },
+          h('path', {
+            d: 'M18 13.4v4.2M18.2 17.6H10.3v4.4M17.8 17.6h8.1v4.4',
+            stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round', opacity: 0.7
+          }),
+          h('circle', { cx: 18, cy: 9.4, r: 3.4, fill: 'currentColor' }),
+          h('circle', { cx: 10.3, cy: 25.5, r: 3.1, stroke: 'currentColor', strokeWidth: 2 }),
+          h('circle', { cx: 25.9, cy: 25.5, r: 3.1, stroke: 'currentColor', strokeWidth: 2 })
+        ),
+        pending > 0 ? h('span', { className: 'stm-icon-badge' }) : null
+      )
+    }
+
+    function TeamList({ state, onOpen, onNotice }) {
+      const teams = state?.teams ?? []
+      return h('div', { className: 'stm-card' },
+        h('h3', { className: 'stm-section-title' }, t('teams')),
+        teams.length === 0
+          ? h('div', { className: 'stm-empty' }, t('noTeams'))
+          : teams.map(team => h('div', {
+            className: 'stm-row stm-row-click',
+            key: team.id,
+            onClick: () => onOpen(team.id)
+          },
+          h('div', { className: 'stm-grow' },
+            h('div', { className: 'stm-name' },
+              team.name,
+              team.id === state.activeTeamId ? h('span', { className: 'stm-chip stm-chip-lead' }, '当前') : null
+            ),
+            h('div', { className: 'stm-meta' },
+              h('span', null, `${t('members')} ${team.memberCount}`),
+              team.leadName ? h('span', null, `${t('lead')}: ${team.leadName}`) : null,
+              team.runningCount > 0 ? h('span', null, t('statusRunning') + ` ${team.runningCount}`) : null,
+              team.openTasks > 0 ? h('span', null, t('openTasks') + ` ${team.openTasks}`) : null,
+              team.pendingReports > 0 ? h('span', { className: 'stm-chip stm-chip-warn' }, `${t('pending')} ${team.pendingReports}`) : null
+            )
+          ),
+          h(Button, { ghost: true }, t('openTeam'))
+          ))
+      )
+    }
+
+    function CreateTeamForm({ state, onCreated, onNotice, onClose }) {
+      const options = modelOptions(state?.models)
+      const fallbackKey = state?.models?.default
+        ? `${state.models.default.provider}\u0001${state.models.default.model}`
+        : ''
+      const [name, setName] = useState('')
+      const [cwd, setCwd] = useState(state?.defaultCwd ?? '')
+      const [rows, setRows] = useState([
+        { name: 'Lead', role: '统筹', stage: 0, lead: true, modelKey: fallbackKey },
+        { name: '', role: '', stage: 1, lead: false, modelKey: fallbackKey }
+      ])
+      const [busy, setBusy] = useState(false)
+      const canCreate = state?.creations?.canCreate !== false
+
+      function patch(index, change) {
+        setRows(previous => previous.map((row, i) => i === index ? { ...row, ...change } : row))
+      }
+      function makeLead(index) {
+        setRows(previous => previous.map((row, i) => ({ ...row, lead: i === index })))
+      }
+
+      function submit() {
+        if (busy) return
+        const filled = rows.filter(row => row.name.trim() !== '')
+        if (filled.length === 0) {
+          onNotice(`${t('createFailed')}: ${t('memberName')} 不能为空`)
+          return
+        }
+        const members = filled.map((row, index) => {
+          const option = options.find(item => item.key === row.modelKey) ?? null
+          return {
+            name: row.name.trim(),
+            role: row.role.trim(),
+            stage: Number.isFinite(Number(row.stage)) ? Number(row.stage) : index + 1,
+            lead: row.lead === true,
+            ...(option === null ? {} : { provider: option.provider, model: option.model })
+          }
+        })
+        setBusy(true)
+        act({ kind: 'create-team', name: name.trim(), cwd: cwd.trim(), members }).then(result => {
+          setBusy(false)
+          if (!result.ok) {
+            onNotice(`${t('createFailed')}: ${result.error?.message ?? result.error}`)
+            return
+          }
+          onNotice(t('created', { n: (result.created ?? []).length }))
+          const failed = (result.created ?? []).filter(item => item.modelError !== '')
+          if (failed.length > 0) onNotice(`${failed.map(item => `${item.name}: ${item.modelError}`).join('; ')}`)
+          if (typeof onCreated === 'function') onCreated(result.team)
+          else if (typeof onClose === 'function') onClose()
+        })
+      }
+
+      return h('div', { className: 'stm-card' },
+        h('div', { className: 'stm-inline', style: { justifyContent: 'space-between' } },
+          h('h3', { className: 'stm-section-title', style: { margin: 0 } }, t('createTitle')),
+          onClose ? h(Button, { ghost: true, onClick: onClose }, t('cancel')) : null
+        ),
+        h('div', { className: 'stm-hint', style: { marginTop: '6px' } }, t('createHint')),
+        h('div', { className: 'stm-inline', style: { marginTop: '10px' } },
+          h('label', { className: 'stm-field', style: { flex: '1' } }, t('teamNameInput'),
+            h('input', {
+              className: 'stm-input',
+              value: name,
+              placeholder: t('teamNameInput'),
+              onChange: event => setName(event.target.value)
+            })
+          ),
+          h('label', { className: 'stm-field', style: { flex: '2' } }, t('cwd'),
+            h('input', {
+              className: 'stm-input',
+              value: cwd,
+              list: 'stm-workspace-paths',
+              placeholder: '/Users/...',
+              onChange: event => setCwd(event.target.value)
+            }),
+            h('datalist', { id: 'stm-workspace-paths' },
+              (state?.workspaces ?? []).map(workspace =>
+                h('option', { key: workspace.id, value: workspace.path }, workspace.title))
+            )
+          )
+        ),
+        h('div', { className: 'stm-hint', style: { marginTop: '4px' } }, t('cwdHint')),
+        rows.map((row, index) => h('div', { className: 'stm-inline', key: index, style: { marginTop: '8px' } },
+          h('input', {
+            className: 'stm-input',
+            value: row.name,
+            placeholder: t('memberName'),
+            style: { width: '130px' },
+            onChange: event => patch(index, { name: event.target.value })
+          }),
+          h('input', {
+            className: 'stm-input',
+            value: row.role,
+            placeholder: t('roleLabel'),
+            style: { width: '110px' },
+            onChange: event => patch(index, { role: event.target.value })
+          }),
+          h('input', {
+            className: 'stm-input',
+            value: row.stage,
+            type: 'number',
+            style: { width: '64px' },
+            onChange: event => patch(index, { stage: event.target.value })
+          }),
+          options.length === 0
+            ? null
+            : h('select', {
+              className: 'stm-select',
+              value: row.modelKey,
+              style: { width: '210px' },
+              onChange: event => patch(index, { modelKey: event.target.value })
+            }, options.map(option => h('option', { value: option.key, key: option.key },
+              `${option.providerName} · ${option.name}`))),
+          h('label', { className: 'stm-inline', style: { gap: '4px', fontSize: '12px' } },
+            h('input', { type: 'checkbox', checked: row.lead === true, onChange: () => makeLead(index) }),
+            t('lead')
+          ),
+          h(Button, { ghost: true, onClick: () => setRows(previous => previous.length <= 1 ? previous : previous.filter((_, i) => i !== index)) }, t('removeRow'))
+        )),
+        h('div', { className: 'stm-inline', style: { marginTop: '10px' } },
+          h(Button, { ghost: true, onClick: () => setRows(previous => [...previous, { name: '', role: '', stage: previous.length, lead: false, modelKey: fallbackKey }]) }, t('addRow')),
+          h(Button, { primary: true, onClick: submit, disabled: busy || !canCreate || cwd.trim() === '' }, busy ? t('creating') : t('createBtn')),
+          state?.models === null ? h('span', { className: 'stm-hint' }, t('noModelCatalog')) : null
+        )
+      )
+    }
+
+    function MemberRow({ member, models, state, onNotice }) {
+      const options = modelOptions(models)
+      const current = member.model
+      const fallback = models?.default
+      const initialKey = current
+        ? `${current.provider}\u0001${current.model}`
+        : fallback ? `${fallback.provider}\u0001${fallback.model}` : ''
+      const [editing, setEditing] = useState(false)
+      const [role, setRole] = useState(member.role)
+      const [stage, setStage] = useState(String(member.stage))
+      const [modelKey, setModelKey] = useState(initialKey)
+      const [effort, setEffort] = useState(current?.reasoningEffort ?? '')
+      const status = statusOf(member)
+      const selectedOption = options.find(option => option.key === modelKey) ?? null
+      const dirtyModel = current === null
+        || `${current.provider}\u0001${current.model}` !== modelKey
+        || (current.reasoningEffort ?? '') !== effort
+
+      function save() {
+        const rosterChanged = role !== member.role || String(stage) !== String(member.stage)
+        const tasks = []
+        if (rosterChanged) {
+          tasks.push(act(withTeam(state, { kind: 'update-member', sessionId: member.sessionId, role, stage: Number(stage) })))
+        }
+        if (dirtyModel && selectedOption !== null) {
+          tasks.push(act(withTeam(state, {
+            kind: 'select-model',
+            sessionId: member.sessionId,
+            provider: selectedOption.provider,
+            model: selectedOption.model,
+            reasoningEffort: effort
+          })))
+        }
+        Promise.all(tasks).then(results => {
+          const failed = results.find(result => !result.ok)
+          if (failed) {
+            onNotice(`${t('modelSaveFailed')}: ${failed.error?.message ?? failed.error}`)
+            return
+          }
+          if (dirtyModel && selectedOption !== null) {
+            onNotice(t('modelSaved', {
+              name: member.name,
+              label: `${selectedOption.name}${effort ? ` · ${effort}` : ''}`
+            }))
+          }
+          setEditing(false)
+        })
+      }
+
+      const chips = []
+      if (member.lead) chips.push(h('span', { key: 'lead', className: 'stm-chip stm-chip-lead' }, t('lead')))
+      if (member.role) chips.push(h('span', { key: 'role', className: 'stm-chip' }, member.role))
+      chips.push(h('span', { key: 'stage', className: 'stm-chip' }, `${t('stage')} ${member.stage}`))
+      const modelText = current
+        ? `${current.model}${current.reasoningEffort ? ` · ${current.reasoningEffort}` : ''}`
+        : null
+      chips.push(h('span', {
+        key: 'model',
+        className: 'stm-chip',
+        title: modelText === null ? t('modelDefault') : `${current.provider}/${current.model}`
+      }, modelText === null
+        ? (fallback ? t('modelDefaultLabel', { name: fallback.model }) : t('modelDefault'))
+        : modelText))
+      if (member.unread > 0) chips.push(h('span', { key: 'unread', className: 'stm-chip' }, `${member.unread} ${t('unread')}`))
+
+      const effortOptions = selectedOption?.efforts ?? []
+      return h('div', { className: 'stm-row' },
+        h('span', { className: `stm-dot stm-dot-${status.kind}` }),
+        h('div', { className: 'stm-grow' },
+          h('div', { className: 'stm-name' }, member.name, chips),
+          h('div', { className: 'stm-meta' },
+            h('span', null, status.label),
+            h('span', { className: 'stm-mono', title: member.sessionId, onClick: () => copyText(member.sessionId) }, member.sessionId)
+          ),
+          editing
+            ? h('div', { className: 'stm-inline', style: { marginTop: '6px' } },
+              h('input', {
+                className: 'stm-input',
+                value: role,
+                placeholder: t('rolePlaceholder'),
+                onChange: event => setRole(event.target.value),
+                style: { width: '120px' }
+              }),
+              h('input', {
+                className: 'stm-input',
+                value: stage,
+                type: 'number',
+                onChange: event => setStage(event.target.value),
+                style: { width: '70px' }
+              }),
+              h('select', {
+                className: 'stm-select',
+                value: modelKey,
+                style: { width: '230px' },
+                onChange: event => {
+                  setModelKey(event.target.value)
+                  const option = options.find(candidate => candidate.key === event.target.value)
+                  setEffort(option?.defaultEffort ?? '')
+                }
+              }, options.length === 0
+                ? h('option', { value: '', key: '' }, t('modelDefault'))
+                : options.map(option => h('option', { value: option.key, key: option.key },
+                  `${option.providerName} · ${option.name}`))),
+              effortOptions.length === 0
+                ? null
+                : h('select', {
+                  className: 'stm-select',
+                  value: effort,
+                  style: { width: '120px' },
+                  onChange: event => setEffort(event.target.value)
+                },
+                h('option', { value: '', key: '' }, t('effortDefault')),
+                effortOptions.map(item => h('option', { value: item.id, key: item.id }, item.name))
+                ),
+              h(Button, { onClick: save, primary: true }, t('save')),
+              h(Button, { onClick: () => setEditing(false), ghost: true }, t('cancel'))
+            )
+            : null
+        ),
+        h(Button, { ghost: true, onClick: () => { if (openSession) openSession(member.sessionId) } }, t('open')),
+        h(Button, { ghost: true, onClick: () => setEditing(true) }, t('role')),
+        member.lead
+          ? null
+          : h(Button, {
+            ghost: true,
+            onClick: () => act(withTeam(state, { kind: 'set-lead', sessionId: member.sessionId })).then(result => {
+              if (!result.ok) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+            })
+          }, t('setLead')),
+        h(Button, {
+          ghost: true,
+          onClick: () => act(withTeam(state, { kind: 'remove-member', sessionId: member.sessionId })).then(result => {
+            if (!result.ok) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+          })
+        }, t('remove'))
+      )
+    }
+
+    function AddMembers({ state, onNotice }) {
+      const [search, setSearch] = useState('')
+      const [selected, setSelected] = useState(() => new Set())
+      const [manual, setManual] = useState('')
+      const candidates = (state?.sessions ?? []).filter(session => {
+        if (session.member) return false
+        if (search.trim() === '') return true
+        const needle = search.trim().toLowerCase()
+        return session.sessionId.toLowerCase().includes(needle)
+          || (session.title ?? '').toLowerCase().includes(needle)
+          || (session.cwd ?? '').toLowerCase().includes(needle)
+      }).slice(0, 60)
+
+      function toggle(sessionId) {
+        const next = new Set(selected)
+        if (next.has(sessionId)) next.delete(sessionId)
+        else next.add(sessionId)
+        setSelected(next)
+      }
+
+      function addSelected() {
+        const items = [...selected].map(sessionId => {
+          const candidate = (state?.sessions ?? []).find(session => session.sessionId === sessionId)
+          return { sessionId, name: candidate?.title ?? '' }
+        })
+        if (items.length === 0) return
+        act(withTeam(state, { kind: 'add-members', items })).then(result => {
+          if (!result.ok) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+          else onNotice(t('injected', { n: result.members ?? items.length }))
+          setSelected(new Set())
+        })
+      }
+
+      function addManual() {
+        const sessionId = manual.trim()
+        if (sessionId === '') return
+        act(withTeam(state, { kind: 'add-member', sessionId })).then(result => {
+          if (!result.ok) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+          setManual('')
+        })
+      }
+
+      return h('div', { className: 'stm-card' },
+        h('h3', { className: 'stm-section-title' }, t('addMember')),
+        h('input', {
+          className: 'stm-input',
+          value: search,
+          placeholder: t('search'),
+          onChange: event => setSearch(event.target.value)
+        }),
+        candidates.length === 0
+          ? h('div', { className: 'stm-empty' }, t('noReports'))
+          : h('div', null, candidates.map(candidate => h('div', { className: 'stm-candidate', key: candidate.sessionId },
+            h('input', { type: 'checkbox', checked: selected.has(candidate.sessionId), onChange: () => toggle(candidate.sessionId) }),
+            h('div', { className: 'stm-candidate-title' },
+              h('div', null, candidate.title || candidate.sessionId),
+              h('div', { className: 'stm-candidate-cwd' }, candidate.cwd || ' ')
+            ),
+            candidate.live ? h('span', { className: 'stm-chip' }, t('statusRunning')) : null
+          ))),
+        h('div', { className: 'stm-inline', style: { marginTop: '10px' } },
+          h(Button, { primary: true, onClick: addSelected, disabled: selected.size === 0 }, `${t('addSelected')} (${selected.size})`)
+        ),
+        h('div', { className: 'stm-inline', style: { marginTop: '10px' } },
+          h('input', {
+            className: 'stm-input',
+            value: manual,
+            placeholder: t('manualPlaceholder'),
+            onChange: event => setManual(event.target.value),
+            style: { width: '260px' }
+          }),
+          h(Button, { onClick: addManual }, t('add'))
+        )
+      )
+    }
+
+    function DispatchBox({ state, onNotice }) {
+      const members = state?.team?.members ?? []
+      const [target, setTarget] = useState('all')
+      const [text, setText] = useState('')
+      const [mode, setMode] = useState('queue')
+      const [busy, setBusy] = useState(false)
+
+      function send() {
+        if (text.trim() === '') return
+        setBusy(true)
+        act(withTeam(state, { kind: 'dispatch', mode, tasks: [{ target, text }] })).then(result => {
+          setBusy(false)
+          if (!result.ok) {
+            onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+            return
+          }
+          const failed = (result.results ?? []).filter(item => !item.ok)
+          if (failed.length > 0) onNotice(`${t('failed')}: ${failed.map(item => `${item.name} ${item.error}`).join('; ')}`)
+          else {
+            setText('')
+            onNotice(`${t('done')}: ${(result.results ?? []).map(item => item.name).join(', ')}`)
+          }
+        })
+      }
+
+      return h('div', { className: 'stm-card' },
+        h('h3', { className: 'stm-section-title' }, t('taskTitle')),
+        h('div', { className: 'stm-inline' },
+          h('label', { className: 'stm-field', style: { flex: '1' } }, t('target'),
+            h('select', { className: 'stm-select', value: target, onChange: event => setTarget(event.target.value) },
+              h('option', { value: 'all', key: 'all' }, t('all')),
+              members.filter(member => !member.lead).map(member =>
+                h('option', { value: member.sessionId, key: member.sessionId }, member.name))
+            )
+          ),
+          h('label', { className: 'stm-field', style: { flex: '1' } }, t('mode'),
+            h('select', { className: 'stm-select', value: mode, onChange: event => setMode(event.target.value) },
+              h('option', { value: 'queue', key: 'queue' }, t('modeQueue')),
+              h('option', { value: 'steer', key: 'steer' }, t('modeSteer'))
+            )
+          )
+        ),
+        h('textarea', {
+          className: 'stm-textarea',
+          style: { marginTop: '8px' },
+          value: text,
+          placeholder: t('taskPlaceholder'),
+          onChange: event => setText(event.target.value)
+        }),
+        h('div', { className: 'stm-inline', style: { marginTop: '8px' } },
+          h(Button, { primary: true, onClick: send, disabled: busy || text.trim() === '' }, busy ? t('sending') : t('send'))
+        )
+      )
+    }
+
+    function ReportList({ state }) {
+      const reports = state?.team?.reports ?? []
+      if (reports.length === 0) {
+        return h('div', { className: 'stm-card' },
+          h('h3', { className: 'stm-section-title' }, t('reports')),
+          h('div', { className: 'stm-empty' }, t('noReports'))
+        )
+      }
+      return h('div', { className: 'stm-card' },
+        h('h3', { className: 'stm-section-title' }, `${t('reports')} · ${state.team.pendingReports} ${t('pending')}`),
+        reports.slice().reverse().map((report, index) => h('div', { className: 'stm-report', key: `${report.createdAt}-${index}` },
+          h('div', { className: 'stm-report-head' },
+            h('span', { className: 'stm-report-subject' }, report.subject),
+            h('span', { className: 'stm-chip' }, report.state),
+            h('span', null, `${report.from}${report.role ? `（${report.role}）` : ''} · 阶段 ${report.stage}`),
+            h('span', { className: 'stm-chip' }, report.delivered ? t('delivered') : t('queued'))
+          ),
+          h('div', { className: 'stm-report-body' }, report.body)
+        ))
+      )
+    }
+
+    function taskStateOf(task) {
+      if (task.state === 'done') return { label: t('taskDone'), kind: 'done' }
+      if (task.state === 'blocked') return { label: t('taskBlocked'), kind: 'blocked' }
+      if (task.stale === true) return { label: t('taskStale'), kind: 'stale' }
+      return { label: t('taskRunning'), kind: 'running' }
+    }
+
+    function TaskCard({ state, onNotice }) {
+      const [busy, setBusy] = useState('')
+      const tasks = state?.team?.tasks ?? []
+      function recover(task) {
+        setBusy(task.id)
+        act(withTeam(state, { kind: 'recover', sessionId: task.sessionId })).then(result => {
+          setBusy('')
+          if (!result.ok) {
+            onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+            return
+          }
+          const resumed = (result.results ?? []).filter(item => item.ok && item.skipped === '')
+          onNotice(resumed.length === 0
+            ? t('recoveredNone')
+            : `${t('done')}: ${resumed.map(item => item.name).join(', ')}`)
+        })
+      }
+      return h('div', { className: 'stm-card' },
+        h('h3', { className: 'stm-section-title' }, `${t('tasks')} · ${t('tasksOpen', { n: state?.team?.openTasks ?? 0 })}`),
+        tasks.length === 0
+          ? h('div', { className: 'stm-empty' }, t('noTasks'))
+          : tasks.slice().reverse().map(task => {
+            const status = taskStateOf(task)
+            return h('div', { className: 'stm-report', key: task.id },
+              h('div', { className: 'stm-report-head' },
+                h('span', { className: 'stm-report-subject' }, task.subject),
+                h('span', { className: `stm-chip${status.kind === 'stale' ? ' stm-chip-warn' : ''}` }, status.label),
+                h('span', null, task.name),
+                h('span', null, t('taskDispatchedAt', { time: new Date(task.dispatchedAt).toLocaleTimeString('zh-CN', { hour12: false }) })),
+                task.resumeCount > 0 ? h('span', null, t('taskResumed', { n: task.resumeCount })) : null,
+                task.stale === true
+                  ? h(Button, { ghost: true, disabled: busy === task.id, onClick: () => recover(task) }, busy === task.id ? '…' : t('recover'))
+                  : null
+              )
+            )
+          })
+      )
+    }
+
+    function TeamDetail({ state, onBack, onNotice }) {
+      const [addOpen, setAddOpen] = useState(false)
+      const [busy, setBusy] = useState(false)
+      const team = state?.team
+      if (!team) {
+        return h('div', { className: 'stm-page' },
+          h('div', { className: 'stm-wrap' },
+            h('div', { className: 'stm-actions' }, h(Button, { onClick: onBack }, t('back'))),
+            h('div', { className: 'stm-card' }, h('div', { className: 'stm-empty' }, t('noTeams')))
+          )
+        )
+      }
+      const leadMember = team.members.find(member => member.lead)
+
+      function run(body, success) {
+        setBusy(true)
+        act(withTeam(state, body)).then(result => {
+          setBusy(false)
+          if (!result.ok) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+          else if (success) onNotice(success)
+        })
+      }
+
+      return h('div', { className: 'stm-page' },
+        h('div', { className: 'stm-wrap' },
+          h('div', { className: 'stm-head' },
+            h('div', null,
+              h('h1', { className: 'stm-title' }, team.name),
+              h('p', { className: 'stm-sub' },
+                `${t('members')} ${team.members.length} · ${t('pending')} ${team.pendingReports}`,
+                leadMember ? ` · ${t('lead')}: ${leadMember.name}` : '',
+                state?.models?.default ? ` · ${t('defaultModel', { name: state.models.default.model })}` : ''
+              )
+            ),
+            h('div', { className: 'stm-actions' },
+              h(Button, { onClick: onBack }, t('back')),
+              h(Button, { onClick: () => refresh(), disabled: false }, t('refresh')),
+              h(Button, { onClick: () => run({ kind: 'flush' }, `${t('done')}: ${t('flush')}`), disabled: busy || !team.lead }, t('flush')),
+              h(Button, { onClick: () => run({ kind: 'brief-lead' }, `${t('done')}: ${t('briefing')}`), disabled: busy || !team.lead }, t('briefing')),
+              h(Button, { onClick: () => setAddOpen(!addOpen) }, addOpen ? t('cancel') : t('addMember')),
+              h(Button, {
+                onClick: () => {
+                  if (typeof window.confirm === 'function' && !window.confirm(t('deleteConfirm'))) return
+                  setBusy(true)
+                  act({ kind: 'delete-team', teamId: team.id }).then(result => {
+                    setBusy(false)
+                    if (!result.ok) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+                    else onBack()
+                  })
+                },
+                disabled: busy
+              }, t('deleteTeam'))
+            )
+          ),
+          addOpen ? h(AddMembers, { state, onNotice }) : null,
+          h('div', { className: 'stm-card' },
+            h('h3', { className: 'stm-section-title' }, t('members')),
+            team.members.length === 0
+              ? h('div', { className: 'stm-empty' }, t('noTeams'))
+              : team.members.map(member => h(MemberRow, {
+                key: member.sessionId,
+                member,
+                models: state?.models,
+                state,
+                onNotice
+              }))
+          ),
+          team.members.length > 0 ? h(DispatchBox, { state, onNotice }) : null,
+          h(TaskCard, { state, onNotice }),
+          h(ReportList, { state }),
+          h('div', { className: 'stm-hint' }, `dsh-session-team v${state?.version ?? '?'}`)
+        )
+      )
+    }
+
+    function TeamPanel() {
+      const snapshot = useStore()
+      usePolling()
+      const state = snapshot.state
+      const [view, setView] = useState('list')
+      const [creating, setCreating] = useState(false)
+      const [notice, setNotice] = useState('')
+
+      function openTeam(teamId) {
+        act({ kind: 'select-team', teamId }).then(result => {
+          if (!result.ok) {
+            setNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+            return
+          }
+          setView('detail')
+        })
+      }
+
+      const notices = []
+      if (notice) notices.push(h('div', { key: 'notice', className: 'stm-notice' }, notice))
+      if (snapshot.error) notices.push(h('div', { key: 'error', className: 'stm-notice stm-notice-error' }, `${t('failed')}: ${snapshot.error}`))
+
+      if (view === 'list') {
+        return h('div', { className: 'stm-page' },
+          h('div', { className: 'stm-wrap' },
+            h('div', { className: 'stm-head' },
+              h('div', null,
+                h('h1', { className: 'stm-title' }, t('title')),
+                h('p', { className: 'stm-sub' }, t('subtitle'))
+              ),
+              h('div', { className: 'stm-actions' },
+                h(Button, { onClick: () => refresh() }, t('refresh')),
+                h(Button, { primary: true, onClick: () => setCreating(!creating) }, t('newTeam'))
+              )
+            ),
+            notices,
+            creating ? h(CreateTeamForm, {
+              state,
+              onCreated: team => {
+                setCreating(false)
+                if (team?.id) openTeam(team.id)
+              },
+              onNotice: setNotice,
+              onClose: () => setCreating(false)
+            }) : null,
+            h(TeamList, { state, onOpen: openTeam, onNotice: setNotice }),
+            h('div', { className: 'stm-hint' }, `dsh-session-team v${state?.version ?? '?'}`)
+          )
+        )
+      }
+
+      return h(TeamDetail, {
+        state,
+        onNotice: setNotice,
+        onBack: () => setView('list')
+      })
+    }
+
+    const inject = ['slots', 'locale']
+
+    function apply(ctx) {
+      try {
+        ctx.effect(() => installStyles(), 'session-team: styles')
+        ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'session-team: dictionaries')
+        boundT = ctx.locale.bind(NS)
+        ctx.slots.inject('sidebar.panellist', () =>
+          ctx.slots.register({ name: 'sidebar.panellist', id: PANEL_KEY, order: 30, label: () => t('panelLabel'), locale: NS }, PanelIcon)
+        )
+        ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: PANEL_KEY, locale: NS }, TeamPanel))
+        const uiWorkspace = ctx.get('uiWorkspace')
+        if (uiWorkspace && typeof uiWorkspace.openSession === 'function') {
+          openSession = sessionId => uiWorkspace.openSession(sessionId)
+        }
+      } catch (error) {
+        console.error('[dsh-session-team] client apply failed:', error)
+      }
+    }
+
+    return { inject, apply }
+  }
+})

@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Session team",
+    "description": "Organize existing sessions into one agent team: pick a Lead session, dispatch work by role, and collect reports by stage, delivered in batches only while the Lead is idle.",
+    "detail": "docs/DETAIL.md"
+  }
+}

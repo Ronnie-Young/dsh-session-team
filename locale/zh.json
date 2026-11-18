@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "会话团队",
+    "description": "把多个已有会话组织成一支 agent 团队：指定一个 Lead 会话，按分工派活、按阶段收集汇报，并在 Lead 空闲时成批送达。",
+    "detail": "docs/DETAIL.md"
+  }
+}

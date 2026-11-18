@@ -1,0 +1,61 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+
+      - name: Resolve and verify the version tag
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ] && [ "${GITHUB_REF_NAME}" != "v$VERSION" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match package.json version ${VERSION}" >&2
+            exit 1
+          fi
+
+      - name: Build the tarball
+        run: npm pack
+
+      - name: Create or update the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          gh release view "$TAG" >/dev/null 2>&1 ||
+            gh release create "$TAG" --title "dsh-session-team $TAG" --generate-notes
+          gh release upload "$TAG" ./*.tgz --clobber
+
+      # 可选：配置 MARKET_TOKEN（有 dsh-plugins-market 写权限的 PAT）后，发版即时通知市场同步。
+      - name: Notify the plugin market (optional)
+        env:
+          MARKET_TOKEN: ${{ secrets.MARKET_TOKEN }}
+        run: |
+          if [ -z "$MARKET_TOKEN" ]; then
+            echo "MARKET_TOKEN 未配置；市场索引由每小时同步任务更新"
+            exit 0
+          fi
+          curl -sS -X POST \
+            -H "Authorization: Bearer $MARKET_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/Ronnie-Young/dsh-plugins-market/dispatches \
+            -d '{"event_type":"plugin-release"}'
