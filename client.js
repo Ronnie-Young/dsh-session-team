@@ -108,7 +108,11 @@ window.__ModuleLoader__.load({
       deleteTeam: '删除团队',
       deleteConfirm: '删除这个团队？只会移除名单，不会删除会话。',
       rename: '重命名',
-      injected: '已加入 {n} 人'
+      injected: '已加入 {n} 人',
+      addAgentTitle: '新建智能体角色',
+      addAgentHint: '等价于新建 session：建好后直接加入本团队，模型可在这里选。',
+      addAgentBtn: '创建并加入',
+      addAgentCreated: '已新建 {n} 个会话并加入团队'
     }
 
     const en = {
@@ -201,7 +205,11 @@ window.__ModuleLoader__.load({
       deleteTeam: 'Delete team',
       deleteConfirm: 'Delete this team? Roster only — sessions are not deleted.',
       rename: 'Rename',
-      injected: 'Added {n} members'
+      injected: 'Added {n} members',
+      addAgentTitle: 'New agent role',
+      addAgentHint: 'Creates a new session and adds it to this team; pick its model here.',
+      addAgentBtn: 'Create and add',
+      addAgentCreated: 'Created {n} sessions and added them to the team'
     }
 
     let boundT = null
@@ -777,6 +785,131 @@ window.__ModuleLoader__.load({
       )
     }
 
+    /** 在已有团队里新建智能体角色（= 新建 session），支持一次加多行。 */
+    function AddAgent({ state, onNotice }) {
+      const team = state?.team
+      const models = state?.models
+      const options = modelOptions(models)
+      const fallbackKey = models?.default ? `${models.default.provider}\u0001${models.default.model}` : ''
+      const [open, setOpen] = useState(false)
+      const [cwd, setCwd] = useState(team?.cwd || state?.defaultCwd || '')
+      const [rows, setRows] = useState([{ name: '', role: '', stage: 0, lead: false, modelKey: fallbackKey }])
+      const [busy, setBusy] = useState(false)
+      const canCreate = state?.creations?.canCreate !== false
+
+      useEffect(() => {
+        setCwd(team?.cwd || state?.defaultCwd || '')
+      }, [team?.id])
+
+      function patch(index, change) {
+        setRows(previous => previous.map((row, i) => i === index ? { ...row, ...change } : row))
+      }
+
+      function submit() {
+        if (busy) return
+        const filled = rows.filter(row => row.name.trim() !== '')
+        if (filled.length === 0) {
+          onNotice(`${t('failed')}: ${t('memberName')} 不能为空`)
+          return
+        }
+        const items = filled.map((row, index) => {
+          const option = options.find(item => item.key === row.modelKey) ?? null
+          return {
+            name: row.name.trim(),
+            role: row.role.trim(),
+            stage: Number.isFinite(Number(row.stage)) ? Number(row.stage) : (team?.members?.length ?? 0) + index + 1,
+            lead: row.lead === true,
+            ...(option === null ? {} : { provider: option.provider, model: option.model })
+          }
+        })
+        setBusy(true)
+        act(withTeam(state, { kind: 'create-members', cwd: cwd.trim(), items })).then(result => {
+          setBusy(false)
+          if (!result.ok) {
+            onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+            return
+          }
+          onNotice(t('addAgentCreated', { n: (result.created ?? []).length }))
+          const failed = (result.created ?? []).filter(item => item.modelError !== '')
+          if (failed.length > 0) onNotice(`${failed.map(item => `${item.name}: ${item.modelError}`).join('; ')}`)
+          setRows([{ name: '', role: '', stage: 0, lead: false, modelKey: fallbackKey }])
+          setOpen(false)
+        })
+      }
+
+      return h('div', { className: 'stm-card' },
+        h('div', { className: 'stm-inline', style: { justifyContent: 'space-between' } },
+          h('h3', { className: 'stm-section-title', style: { margin: 0 } }, t('addAgentTitle')),
+          h(Button, { ghost: true, onClick: () => setOpen(!open) }, open ? t('cancel') : t('createExpand'))
+        ),
+        open
+          ? h('div', null,
+            h('div', { className: 'stm-hint', style: { marginTop: '6px' } }, t('addAgentHint')),
+            h('div', { className: 'stm-inline', style: { marginTop: '10px' } },
+              h('label', { className: 'stm-field', style: { flex: '1' } }, t('cwd'),
+                h('input', {
+                  className: 'stm-input',
+                  value: cwd,
+                  list: 'stm-agent-workspace-paths',
+                  placeholder: '/Users/...',
+                  onChange: event => setCwd(event.target.value)
+                }),
+                h('datalist', { id: 'stm-agent-workspace-paths' },
+                  (state?.workspaces ?? []).map(workspace =>
+                    h('option', { key: workspace.id, value: workspace.path }, workspace.title))
+                )
+              )
+            ),
+            rows.map((row, index) => h('div', { className: 'stm-inline', key: index, style: { marginTop: '8px' } },
+              h('input', {
+                className: 'stm-input',
+                value: row.name,
+                placeholder: t('memberName'),
+                style: { width: '130px' },
+                onChange: event => patch(index, { name: event.target.value })
+              }),
+              h('input', {
+                className: 'stm-input',
+                value: row.role,
+                placeholder: t('roleLabel'),
+                style: { width: '110px' },
+                onChange: event => patch(index, { role: event.target.value })
+              }),
+              h('input', {
+                className: 'stm-input',
+                value: row.stage,
+                type: 'number',
+                style: { width: '64px' },
+                onChange: event => patch(index, { stage: event.target.value })
+              }),
+              options.length === 0
+                ? null
+                : h('select', {
+                  className: 'stm-select',
+                  value: row.modelKey,
+                  style: { width: '210px' },
+                  onChange: event => patch(index, { modelKey: event.target.value })
+                }, options.map(option => h('option', { value: option.key, key: option.key },
+                  `${option.providerName} · ${option.name}`))),
+              h('label', { className: 'stm-inline', style: { gap: '4px', fontSize: '12px' } },
+                h('input', {
+                  type: 'checkbox',
+                  checked: row.lead === true,
+                  onChange: () => setRows(previous => previous.map((candidate, i) => ({ ...candidate, lead: i === index ? !row.lead : false })))
+                }),
+                t('lead')
+              ),
+              h(Button, { ghost: true, onClick: () => setRows(previous => previous.length <= 1 ? previous : previous.filter((_, i) => i !== index)) }, t('removeRow'))
+            )),
+            h('div', { className: 'stm-inline', style: { marginTop: '10px' } },
+              h(Button, { ghost: true, onClick: () => setRows(previous => [...previous, { name: '', role: '', stage: previous.length, lead: false, modelKey: fallbackKey }]) }, t('addRow')),
+              h(Button, { primary: true, onClick: submit, disabled: busy || !canCreate || cwd.trim() === '' }, busy ? t('creating') : t('addAgentBtn'))
+            )
+          )
+          : null
+      )
+    }
+
     function DispatchBox({ state, onNotice }) {
       const members = state?.team?.members ?? []
       const [target, setTarget] = useState('all')
@@ -967,6 +1100,7 @@ window.__ModuleLoader__.load({
                 onNotice
               }))
           ),
+          h(AddAgent, { state, onNotice }),
           team.members.length > 0 ? h(DispatchBox, { state, onNotice }) : null,
           h(TaskCard, { state, onNotice }),
           h(ReportList, { state }),

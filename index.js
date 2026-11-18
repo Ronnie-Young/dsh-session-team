@@ -773,6 +773,51 @@ export async function apply(ctx, config) {
     }
   }
 
+  /** 在已有团队里新建智能体角色（等价于新建 session，可批量）。 */
+  async function createMembers(team, request, signal) {
+    const controller = ctx.get('sessionController')
+    if (!controller || typeof controller.create !== 'function') {
+      throw new Error('sessionController 不可用，无法新建会话')
+    }
+    const rows = Array.isArray(request?.items)
+      ? request.items
+      : (request?.name !== undefined ? [request] : [])
+    if (rows.length === 0) throw new Error('至少填一行成员')
+    const cwd = String(request?.cwd ?? '').trim() || team.cwd
+    if (cwd === '') throw new Error('需要指定工作目录（cwd）')
+    if (!cwd.startsWith('/')) throw new Error('工作目录必须是绝对路径')
+    if (team.cwd === '') team.cwd = cwd
+    const created = []
+    let leadSessionId = ''
+    for (const [index, row] of rows.entries()) {
+      const name = String(row?.name ?? '').trim() || `成员 ${team.members.length + index + 1}`
+      const role = String(row?.role ?? '').trim()
+      const stage = Number.isFinite(row?.stage) ? Number(row.stage) : team.members.length + index + 1
+      const value = await controller.create({ cwd })
+      const sessionId = value.sessionId
+      let modelError = ''
+      if (typeof row?.provider === 'string' && row.provider !== ''
+        && typeof row?.model === 'string' && row.model !== '') {
+        try {
+          await selectMemberModel({ sessionId, name }, row.provider, row.model, row.reasoningEffort ?? '', signal)
+        } catch (error) {
+          modelError = error instanceof Error ? error.message : String(error)
+        }
+      }
+      if (typeof controller.rename === 'function') {
+        try {
+          await controller.rename({ sessionId, title: `${team.name} · ${name}` })
+        } catch { /* 标题只是展示用 */ }
+      }
+      team.members.push({ sessionId, name, role, stage })
+      if (row?.lead === true && leadSessionId === '') leadSessionId = sessionId
+      created.push({ sessionId, name, role, stage, modelError })
+    }
+    if (leadSessionId !== '') team.lead = leadSessionId
+    scheduleTeamsSave()
+    return { created }
+  }
+
   // ---- 工具 ----
 
   const leadOnly = context => teams.some(team => team.lead !== '' && team.lead === context.agent.id)
@@ -1579,29 +1624,12 @@ export async function apply(ctx, config) {
             scheduleTeamsSave()
             return { ok: true, name }
           }
-          case 'create-member': {
-            // 在一个已有团队里补一个新建会话的成员（不新建团队）。
+          case 'create-member':
+          case 'create-members': {
+            // 在已有团队里新建智能体角色（等价于新建 session，可批量）。
             const team = targetTeam(body)
-            const controller = ctx.get('sessionController')
-            if (!controller || typeof controller.create !== 'function') throw new Error('sessionController 不可用')
-            const cwd = String(body.cwd ?? '').trim() || team.cwd
-            if (cwd === '') throw new Error('需要指定工作目录')
-            const value = await controller.create({ cwd })
-            const sessionId = value.sessionId
-            const name = String(body.name ?? '').trim() || `成员 ${team.members.length + 1}`
-            if (typeof body.provider === 'string' && body.provider !== '' && typeof body.model === 'string' && body.model !== '') {
-              try {
-                await selectMemberModel({ sessionId, name }, body.provider, body.model, body.reasoningEffort ?? '', idleSignal())
-              } catch { /* 模型失败不影响成员 */ }
-            }
-            team.members.push({
-              sessionId,
-              name,
-              role: String(body.role ?? '').trim(),
-              stage: Number.isFinite(body.stage) ? Number(body.stage) : team.members.length + 1,
-            })
-            scheduleTeamsSave()
-            return { ok: true, sessionId }
+            const items = body.kind === 'create-members' && Array.isArray(body.items) ? body.items : [body]
+            return { ok: true, ...(await createMembers(team, { cwd: body.cwd, items }, idleSignal())) }
           }
           case 'select-model': {
             const team = targetTeam(body)

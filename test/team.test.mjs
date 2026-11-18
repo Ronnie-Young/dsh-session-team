@@ -598,6 +598,32 @@ test('多团队：工具与会话按调用者所在团队隔离', async () => {
   assert.equal(selected.activeTeamId, teamA.team.id)
 })
 
+test('已有团队中可以新建智能体角色（等价于新建 session）', async () => {
+  const h = await harness({ ...TEAM, deliverOnIdle: false })
+  const result = await h.callRoute('/session-team/action', {
+    method: 'POST',
+    body: {
+      kind: 'create-members',
+      cwd: '/tmp/proj',
+      items: [
+        { name: 'designer', role: '设计', stage: 9, provider: 'p1', model: 'm1' },
+        { name: 'docs', role: '文档', stage: 10, lead: true },
+      ],
+    },
+  })
+  assert.equal(result.ok, true)
+  assert.equal(result.created.length, 2)
+  assert.equal(h.selections.get(result.created[0].sessionId).model, 'm1')
+
+  const state = await h.callRoute('/session-team/state')
+  assert.equal(state.team.members.length, 5)
+  assert.equal(state.team.lead, result.created[1].sessionId)
+
+  const saved = await h.readTeams()
+  assert.equal(saved.teams[0].cwd, '/tmp/proj')
+  assert.equal(saved.teams[0].members.length, 5)
+})
+
 test('未知操作返回错误而不是抛出面板路由', async () => {
   const h = await harness(TEAM)
   const payload = await h.callRoute('/session-team/action', {
