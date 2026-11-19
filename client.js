@@ -419,7 +419,7 @@ window.__ModuleLoader__.load({
 .stm-tab-on{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l2)}
 .stm-more{margin-top:8px}
 /* —— 工作台 v2 —— */
-.stm-workbench{overflow:hidden!important;padding:14px 18px 16px!important;display:block}
+.stm-workbench{overflow:hidden!important;padding:56px 22px 16px!important;display:block}
 .stm-workbench .stm-wrap{max-width:none!important;width:100%!important;align-self:stretch;height:100%;gap:0}
 .stm-workbench .stm-body{width:100%}
 .stm-topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:2px 2px 12px;flex-shrink:0}
@@ -446,7 +446,8 @@ window.__ModuleLoader__.load({
 .stm-rail-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .stm-rail-sub{font-size:11px;color:var(--dsw-alias-label-secondary);display:flex;gap:5px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .stm-rail-badge{flex-shrink:0;font-size:10px;font-weight:600;border-radius:999px;padding:0 6px;line-height:16px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary)}
-.stm-main{flex:1;min-width:0;display:flex;flex-direction:column;border:1px solid var(--dsw-alias-border-l1);border-radius:16px;background:var(--dsw-alias-bg-layer-1);overflow:hidden}
+.stm-main{flex:1;min-width:0;display:flex;flex-direction:column;border:1px solid var(--dsw-alias-border-l1);border-radius:16px;background:var(--dsw-alias-bg-layer-1);overflow:hidden;transition:margin-right .16s ease}
+.stm-main-aside{margin-right:404px}
 .stm-chat-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;border-bottom:1px solid var(--dsw-alias-border-l1);flex-shrink:0}
 .stm-chat-id{display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
 .stm-chat-id strong{font-size:14px;font-weight:650}
@@ -475,6 +476,8 @@ window.__ModuleLoader__.load({
 .stm-send{border:0;border-radius:9px;background:var(--dsw-alias-label-primary);color:var(--dsw-alias-bg-base);font-size:13px;font-weight:600;padding:7px 18px;cursor:pointer}
 .stm-send:disabled{opacity:.45;cursor:default}
 .stm-interrupt{border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-error,#d9534f);border-radius:9px;font-size:12px;padding:5px 10px;cursor:pointer}
+.stm-drawer-out{animation:stm-slide-out .16s ease-in forwards}
+@keyframes stm-slide-out{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:.6}}
 .stm-drawer{position:absolute;top:0;right:0;bottom:0;width:392px;max-width:92%;z-index:40;display:flex;flex-direction:column;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1);border-radius:16px;box-shadow:-18px 0 44px rgba(0,0,0,.16);overflow:hidden;animation:stm-slide-in .16s ease-out}
 .stm-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--dsw-alias-border-l1);flex-shrink:0}
 .stm-drawer-title{font-size:13px;font-weight:650}
@@ -1396,7 +1399,7 @@ window.__ModuleLoader__.load({
           : member.active ? { kind: 'idle', label: t('drawerIdle') }
             : { kind: 'off', label: t('drawerOff') }
 
-      return h('div', { className: 'stm-drawer' },
+      return h('div', { className: `stm-drawer${closing === true ? ' stm-drawer-out' : ''}` },
         h('div', { className: 'stm-drawer-head' },
           h('div', null,
             h('div', { className: 'stm-drawer-title' }, member === null ? t('drawerTitle') : member.name),
@@ -1880,7 +1883,7 @@ window.__ModuleLoader__.load({
       }
 
       if (member === null) {
-        return h('div', { className: 'stm-main' }, h('div', { className: 'stm-empty' }, t('chatEmpty')))
+        return h('div', { className: `stm-main${sideOpen === true ? ' stm-main-aside' : ''}` }, h('div', { className: 'stm-empty' }, t('chatEmpty')))
       }
 
       const running = live?.running === true || member.running === true
@@ -1895,7 +1898,7 @@ window.__ModuleLoader__.load({
       const streamText = (live?.streamText !== undefined && live.streamText !== '') ? live.streamText : ''
       const reasoningText = (live?.streamReasoning !== undefined && live.streamReasoning !== '') ? live.streamReasoning : ''
 
-      return h('div', { className: 'stm-main' },
+      return h('div', { className: `stm-main${sideOpen === true ? ' stm-main-aside' : ''}` },
         h('div', { className: 'stm-chat-head' },
           h('div', { className: 'stm-chat-id' },
             h('span', { className: `stm-dot stm-dot-${status.kind}` }),
@@ -1999,7 +2002,7 @@ window.__ModuleLoader__.load({
     }
 
     /** 右侧浮层：任务 / 汇报 / 通知 / 派活。 */
-    function SideDrawer({ state, onNotice, onReply, onClose }) {
+    function SideDrawer({ state, onNotice, onReply, onClose, closing }) {
       const team = state?.team ?? {}
       const tasks = team.tasks ?? []
       const reports = team.reports ?? []
@@ -2027,7 +2030,7 @@ window.__ModuleLoader__.load({
         { id: 'dispatch', label: t('dispatchTab') }
       ]
 
-      return h('div', { className: 'stm-drawer' },
+      return h('div', { className: `stm-drawer${closing === true ? ' stm-drawer-out' : ''}` },
         h('div', { className: 'stm-drawer-head' },
           h('div', { className: 'stm-drawer-title' }, t('panelExpand')),
           h('button', { className: 'stm-icon-btn', onClick: onClose }, t('cancel'))
@@ -2108,6 +2111,8 @@ window.__ModuleLoader__.load({
       const [draft, setDraft] = useState('')
       const [selectedId, setSelectedId] = useState('')
       const [sideOpen, setSideOpen] = useState(false)
+      const [sideClosing, setSideClosing] = useState(false)
+      const sideTimer = useRef(null)
       const team = state?.team
 
       const effectiveId = team === undefined || team === null
@@ -2154,6 +2159,24 @@ window.__ModuleLoader__.load({
         }, 900)
         return () => clearTimeout(timer)
       }, [])
+
+      function closeSide() {
+        setSideClosing(true)
+        if (sideTimer.current !== null) clearTimeout(sideTimer.current)
+        sideTimer.current = setTimeout(() => {
+          setSideClosing(false)
+          setSideOpen(false)
+        }, 160)
+      }
+
+      function openSide() {
+        if (sideTimer.current !== null) {
+          clearTimeout(sideTimer.current)
+          sideTimer.current = null
+        }
+        setSideClosing(false)
+        setSideOpen(true)
+      }
 
       if (!team) {
         return h('div', { className: 'stm-page' },
@@ -2244,20 +2267,21 @@ window.__ModuleLoader__.load({
               onDraft: setDraft,
               onNotice,
               openSession,
-              sideOpen,
-              onToggleSide: () => setSideOpen(!sideOpen),
+              sideOpen: sideOpen || sideClosing,
+              onToggleSide: () => { if (sideOpen) closeSide(); else openSide() },
               taskCount: openTaskCount,
               reportCount: unreadCount
             }),
-            sideOpen
+            sideOpen || sideClosing
               ? h(SideDrawer, {
                 state,
+                closing: sideClosing,
                 onNotice,
-                onClose: () => setSideOpen(false),
+                onClose: closeSide,
                 onReply: (id, subject) => {
                   setSelectedId(id)
                   setDraft(`关于「${subject}」：`)
-                  setSideOpen(false)
+                  closeSide()
                 }
               })
               : null
