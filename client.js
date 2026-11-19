@@ -407,7 +407,7 @@ window.__ModuleLoader__.load({
 .stm-btn-primary{background:var(--stm-brand-hover);border-color:transparent;color:var(--stm-brand-ink)}
 .stm-btn-primary:hover:not(:disabled){border-color:transparent;filter:brightness(1.05)}
 .stm-btn-primary:disabled{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary)}
-.stm-btn-ghost{height:26px;padding:0 8px;font-size:12px;background:transparent}
+.stm-btn-ghost{height:30px;padding:0 10px;font-size:12px;background:transparent}
 .stm-card{border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);border-radius:14px;padding:16px 18px}
 .stm-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--dsw-alias-border-l1)}
 .stm-row:last-child{border-bottom:0}
@@ -575,8 +575,10 @@ window.__ModuleLoader__.load({
 .stm-send:hover:not(:disabled){opacity:.88}
 .stm-send:active:not(:disabled){transform:scale(.96)}
 .stm-send:disabled{opacity:.4;cursor:default}
-.stm-interrupt{border:0;background:transparent;color:var(--dsw-alias-label-error,#d9534f);border-radius:9px;font-size:12px;height:32px;padding:0 10px;cursor:pointer;transition-property:background-color;transition-duration:120ms}
-.stm-interrupt:hover{background:var(--dsw-alias-bg-layer-2)}
+.stm-interrupt{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:9px;border:1px solid rgba(220,38,38,.32);border:1px solid color-mix(in srgb,var(--stm-danger) 32%,transparent);background:rgba(220,38,38,.08);background:var(--stm-danger-weak);color:var(--stm-danger);font-size:12.5px;font-weight:500;cursor:pointer;transition-property:background-color,border-color,transform;transition-duration:120ms}
+.stm-interrupt:hover{background:rgba(220,38,38,.16);background:color-mix(in srgb,var(--stm-danger) 18%,transparent);border-color:rgba(220,38,38,.5);border-color:color-mix(in srgb,var(--stm-danger) 50%,transparent)}
+.stm-interrupt:active{transform:scale(.96)}
+.stm-interrupt:disabled{opacity:.45;cursor:default}
 .stm-compose-hint{font-size:11px;color:var(--dsw-alias-label-secondary);text-wrap:pretty}
 .stm-rail-gear{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;color:var(--dsw-alias-label-secondary);border-radius:9px;transition-property:background-color,color;transition-duration:120ms}
 .stm-rail-gear:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-bg-layer-2))}
