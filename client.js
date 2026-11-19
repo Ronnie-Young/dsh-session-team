@@ -61,6 +61,12 @@ window.__ModuleLoader__.load({
       generating: '正在生成',
       thinking: '思考中',
       systemBlock: '系统上下文',
+      roleSettings: '角色设置',
+      roleSettingsHint: '改角色、优先级、模型与思考强度；也可以设为 Lead 或移出团队。',
+      setLeadDone: '已设为 Lead',
+      removeRoleDone: '已移出团队',
+      saveDone: '已保存',
+      removeConfirm: '确定把「{name}」移出团队？会话本身和聊天记录都会保留。',
       sessionRename: '重命名会话',
       sessionArchive: '归档会话',
       chatRefresh: '刷新对话',
@@ -231,6 +237,12 @@ window.__ModuleLoader__.load({
       generating: 'Generating',
       thinking: 'Thinking',
       systemBlock: 'System context',
+      roleSettings: 'Role settings',
+      roleSettingsHint: 'Change role, priority, model and reasoning effort; set as Lead or remove from the team.',
+      setLeadDone: 'Set as Lead',
+      removeRoleDone: 'Removed from the team',
+      saveDone: 'Saved',
+      removeConfirm: 'Remove "{name}" from the team? The session and its history are kept.',
       sessionRename: 'Rename session',
       sessionArchive: 'Archive session',
       chatRefresh: 'Refresh chat',
@@ -418,76 +430,114 @@ window.__ModuleLoader__.load({
 .stm-tab{border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-secondary);border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer}
 .stm-tab-on{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l2)}
 .stm-more{margin-top:8px}
-/* —— 工作台 v2 —— */
-.stm-workbench{overflow:hidden!important;padding:56px 22px 16px!important;display:block}
+/* —— 工作台 v3 —— */
+.stm-workbench{overflow:hidden!important;padding:56px 20px 18px!important;display:block;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 .stm-workbench .stm-wrap{max-width:none!important;width:100%!important;align-self:stretch;height:100%;gap:0}
 .stm-workbench .stm-body{width:100%}
-.stm-topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:2px 2px 12px;flex-shrink:0}
-.stm-topbar-left{display:flex;flex-direction:column;gap:4px;min-width:0}
-.stm-topbar-title{font-size:18px;font-weight:650;letter-spacing:.01em;color:var(--dsw-alias-label-primary);line-height:1.3;margin:0}
-.stm-topbar-meta{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--dsw-alias-label-secondary)}
-.stm-topbar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.stm-icon-btn{border:0;background:transparent;color:var(--dsw-alias-label-secondary);border-radius:8px;height:28px;min-width:28px;padding:0 8px;font-size:14px;line-height:1;cursor:pointer}
+.stm-topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:0 2px 14px;flex-shrink:0}
+.stm-topbar-left{display:flex;flex-direction:column;gap:6px;min-width:0}
+.stm-topbar-title{font-size:17px;font-weight:650;letter-spacing:-.01em;color:var(--dsw-alias-label-primary);line-height:1.25;margin:0;text-wrap:balance}
+.stm-topbar-meta{display:flex;gap:0;flex-wrap:wrap;font-size:12px;color:var(--dsw-alias-label-secondary);align-items:center}
+.stm-topbar-meta>span+span::before{content:'·';margin:0 8px;opacity:.5}
+.stm-meta-num{font-variant-numeric:tabular-nums}
+.stm-topbar-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.stm-icon-btn{border:0;background:transparent;color:var(--dsw-alias-label-secondary);border-radius:9px;height:32px;min-width:32px;padding:0 9px;font-size:14px;line-height:1;cursor:pointer;transition-property:background-color,color;transition-duration:120ms}
 .stm-icon-btn:hover{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}
+.stm-icon-btn:active{transform:scale(.96)}
 .stm-menu-wrap{position:relative}
-.stm-menu{position:absolute;right:0;top:34px;z-index:90;min-width:176px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1);border-radius:12px;box-shadow:0 16px 36px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column;gap:1px}
-.stm-menu-item{text-align:left;border:0;background:transparent;color:var(--dsw-alias-label-primary);border-radius:8px;padding:8px 10px;font-size:13px;cursor:pointer}
+.stm-menu{position:absolute;right:0;top:36px;z-index:90;min-width:184px;background:var(--dsw-alias-bg-layer-1);border-radius:12px;padding:5px;display:flex;flex-direction:column;gap:1px;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 10px 24px -6px rgba(0,0,0,.24),0 24px 48px -12px rgba(0,0,0,.18)}
+.stm-menu-item{text-align:left;border:0;background:transparent;color:var(--dsw-alias-label-primary);border-radius:8px;padding:8px 10px;font-size:13px;cursor:pointer;transition-property:background-color;transition-duration:120ms}
 .stm-menu-item:hover{background:var(--dsw-alias-bg-layer-2)}
 .stm-menu-danger{color:var(--dsw-alias-label-error,#d9534f)}
-.stm-body{flex:1;display:flex;gap:12px;min-height:0;position:relative}
-.stm-rail{width:196px;flex:0 0 196px;display:flex;flex-direction:column;min-height:0;border:1px solid var(--dsw-alias-border-l1);border-radius:16px;background:var(--dsw-alias-bg-layer-1);overflow:hidden}
-.stm-rail-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px 8px;font-size:12px;color:var(--dsw-alias-label-secondary);flex-shrink:0}
+.stm-body{flex:1;display:flex;gap:14px;min-height:0;position:relative}
+.stm-rail{width:204px;flex:0 0 204px;display:flex;flex-direction:column;min-height:0;border-radius:14px;background:var(--dsw-alias-bg-layer-1);overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.05)}
+.stm-rail-head{display:flex;align-items:center;justify-content:space-between;padding:10px 8px 6px 14px;font-size:11.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--dsw-alias-label-secondary);flex-shrink:0}
 .stm-rail-list{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:0 6px 8px}
-.stm-rail-item{display:flex;align-items:center;gap:8px;width:100%;padding:9px 8px;border:0;border-radius:10px;background:transparent;color:var(--dsw-alias-label-primary);cursor:pointer;text-align:left}
+.stm-rail-item{display:flex;align-items:center;gap:9px;width:100%;padding:8px;border:0;border-radius:10px;background:transparent;color:var(--dsw-alias-label-primary);cursor:pointer;text-align:left;transition-property:background-color;transition-duration:120ms}
 .stm-rail-item:hover{background:var(--dsw-alias-bg-layer-2)}
-.stm-rail-item-on{background:var(--dsw-alias-bg-layer-2);box-shadow:inset 2px 0 0 var(--dsw-alias-brand-primary,var(--dsw-alias-label-primary))}
-.stm-rail-main{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
-.stm-rail-name{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;min-width:0}
-.stm-rail-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.stm-rail-sub{font-size:11px;color:var(--dsw-alias-label-secondary);display:flex;gap:5px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.stm-rail-badge{flex-shrink:0;font-size:10px;font-weight:600;border-radius:999px;padding:0 6px;line-height:16px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary)}
-.stm-main{flex:1;min-width:0;display:flex;flex-direction:column;border:1px solid var(--dsw-alias-border-l1);border-radius:16px;background:var(--dsw-alias-bg-layer-1);overflow:hidden;transition:margin-right .16s ease}
-.stm-main-aside{margin-right:404px}
-.stm-chat-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;border-bottom:1px solid var(--dsw-alias-border-l1);flex-shrink:0}
-.stm-chat-id{display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
-.stm-chat-id strong{font-size:14px;font-weight:650}
-.stm-chat-meta{font-size:12px;color:var(--dsw-alias-label-secondary);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.stm-chat-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
-.stm-chat-body{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:22px 0}
-.stm-thread{max-width:780px;margin:0 auto;padding:0 28px;display:flex;flex-direction:column;gap:18px}
-.stm-msg{display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.75}
-.stm-msg-user{align-self:flex-end;max-width:84%;background:var(--dsw-alias-bg-layer-2,var(--dsw-alias-bg-layer-1));border:1px solid var(--dsw-alias-border-l1);border-radius:14px 14px 4px 14px;padding:10px 14px}
-.stm-msg-role{font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--dsw-alias-label-secondary);display:flex;gap:8px;align-items:center}
-.stm-msg-text{color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word}
-.stm-msg-system{border-left:2px solid var(--dsw-alias-border-l2);padding:2px 0 2px 12px;color:var(--dsw-alias-label-secondary);font-size:12.5px;line-height:1.65}
-.stm-msg-clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.stm-msg-tools{display:flex;gap:6px;flex-wrap:wrap;font-size:11.5px;color:var(--dsw-alias-label-secondary)}
-.stm-tool{font-family:var(--dsw-alias-font-mono,ui-monospace,monospace);font-size:11.5px;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-2,transparent);border-radius:6px;padding:3px 8px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;align-self:flex-start}
-.stm-live{display:flex;flex-direction:column;gap:4px;padding:10px 14px;border-left:2px solid var(--dsw-alias-brand-primary,var(--dsw-alias-border-l2));color:var(--dsw-alias-label-secondary);font-size:13px;line-height:1.7}
-.stm-live-head{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;letter-spacing:.03em}
-.stm-live-dot{width:6px;height:6px;border-radius:999px;background:currentColor;animation:stm-pulse 1.1s ease-in-out infinite}
-@keyframes stm-pulse{0%,100%{opacity:.25}50%{opacity:1}}
-.stm-live-text{white-space:pre-wrap;word-break:break-word;max-height:180px;overflow:hidden}
-.stm-compose-wrap{border-top:1px solid var(--dsw-alias-border-l1);padding:12px 20px 14px;flex-shrink:0;background:var(--dsw-alias-bg-layer-1)}
-.stm-compose{max-width:780px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
-.stm-seg{display:inline-flex;border:1px solid var(--dsw-alias-border-l1);border-radius:9px;overflow:hidden;padding:2px}
-.stm-seg button{border:0;background:transparent;color:var(--dsw-alias-label-secondary);border-radius:7px;font-size:12px;padding:4px 12px;cursor:pointer}
-.stm-seg-on{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);font-weight:600}
-.stm-send{border:0;border-radius:9px;background:var(--dsw-alias-label-primary);color:var(--dsw-alias-bg-base);font-size:13px;font-weight:600;padding:7px 18px;cursor:pointer}
-.stm-send:disabled{opacity:.45;cursor:default}
-.stm-interrupt{border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-error,#d9534f);border-radius:9px;font-size:12px;padding:5px 10px;cursor:pointer}
-.stm-drawer-out{animation:stm-slide-out .16s ease-in forwards}
-@keyframes stm-slide-out{from{transform:translateX(0);opacity:1}to{transform:translateX(100%);opacity:.6}}
-.stm-drawer{position:absolute;top:0;right:0;bottom:0;width:392px;max-width:92%;z-index:40;display:flex;flex-direction:column;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1);border-radius:16px;box-shadow:-18px 0 44px rgba(0,0,0,.16);overflow:hidden;animation:stm-slide-in .16s ease-out}
-.stm-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--dsw-alias-border-l1);flex-shrink:0}
-.stm-drawer-title{font-size:13px;font-weight:650}
-.stm-drawer-tabs{display:flex;gap:4px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--dsw-alias-border-l1);flex-shrink:0}
-.stm-drawer-body{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:12px;display:flex;flex-direction:column;gap:10px}
-.stm-item{border:1px solid var(--dsw-alias-border-l1);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:12.5px}
-.stm-item-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--dsw-alias-label-secondary);font-size:11.5px}
-.stm-item-subject{font-weight:650;color:var(--dsw-alias-label-primary);font-size:13px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.stm-item-body{color:var(--dsw-alias-label-secondary);line-height:1.7;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
+.stm-rail-item-on{background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-bg-layer-2))}
+.stm-rail-item-on .stm-rail-name{font-weight:650}
+.stm-rail-main{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+.stm-rail-name{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:550;min-width:0}
+.stm-rail-name>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stm-rail-sub{font-size:11px;color:var(--dsw-alias-label-secondary);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.stm-rail-badge{flex-shrink:0;font-size:10px;font-weight:600;border-radius:999px;padding:0 6px;line-height:15px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);letter-spacing:.02em}
+.stm-main{flex:1;min-width:0;display:flex;flex-direction:column;border-radius:14px;background:var(--dsw-alias-bg-layer-1);overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.05);transition-property:margin-right;transition-duration:200ms;transition-timing-function:cubic-bezier(.2,0,0,1)}
+.stm-main-aside{margin-right:412px}
+.stm-chat-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px 10px 18px;flex-shrink:0;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.stm-chat-id{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
+.stm-chat-id>strong{font-size:14px;font-weight:650;letter-spacing:-.01em}
+.stm-chat-meta{font-size:11.5px;color:var(--dsw-alias-label-secondary);display:flex;gap:0;align-items:center;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.stm-chat-meta>span+span::before{content:'·';margin:0 7px;opacity:.5}
+.stm-chat-actions{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.stm-ghost-btn{border:0;background:transparent;color:var(--dsw-alias-label-secondary);border-radius:9px;height:32px;padding:0 10px;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition-property:background-color,color;transition-duration:120ms}
+.stm-ghost-btn:hover{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}
+.stm-ghost-btn:active{transform:scale(.96)}
+.stm-chat-body{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:24px 0 8px}
+.stm-thread{max-width:min(760px,100%);margin:0 auto;padding:0 32px;display:flex;flex-direction:column;gap:20px}
+.stm-msg{display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.75;color:var(--dsw-alias-label-primary)}
+.stm-msg-user{align-self:flex-end;max-width:86%;background:var(--dsw-alias-bg-layer-2,var(--dsw-alias-bg-layer-1));border-radius:14px 14px 5px 14px;padding:9px 14px;box-shadow:0 0 0 1px rgba(0,0,0,.04)}
+.stm-msg-role{font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--dsw-alias-label-secondary);display:flex;gap:8px;align-items:center;font-variant-numeric:tabular-nums}
+.stm-msg-text{color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;text-wrap:pretty}
+.stm-msg-md{display:flex;flex-direction:column;gap:2px;text-wrap:pretty}
+.stm-msg-system{border-left:2px solid var(--dsw-alias-border-l2);padding:1px 0 1px 12px;color:var(--dsw-alias-label-secondary);font-size:12.5px;line-height:1.7}
+.stm-msg-clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.stm-msg-tools{display:flex;gap:6px;flex-wrap:wrap;font-size:11.5px;color:var(--dsw-alias-label-secondary);align-items:center}
+.stm-tool{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-2,transparent);border-radius:7px;padding:3px 8px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;align-self:flex-start}
+.stm-live{display:flex;flex-direction:column;gap:5px;padding:2px 0 2px 12px;border-left:2px solid var(--dsw-alias-brand-primary,var(--dsw-alias-border-l2));color:var(--dsw-alias-label-secondary);font-size:13px;line-height:1.7}
+.stm-live-head{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+.stm-live-dot{width:6px;height:6px;border-radius:999px;background:currentColor;animation:stm-pulse 1.2s ease-in-out infinite}
+@keyframes stm-pulse{0%,100%{opacity:.2}50%{opacity:1}}
+.stm-live-text{white-space:pre-wrap;word-break:break-word;max-height:190px;overflow:hidden;text-wrap:pretty}
+.stm-compose-wrap{padding:10px 16px 12px;flex-shrink:0;border-top:1px solid var(--dsw-alias-border-l1)}
+.stm-compose{max-width:min(760px,100%);margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.stm-compose textarea{min-height:64px;max-height:200px}
+.stm-seg{display:inline-flex;background:var(--dsw-alias-bg-layer-2,transparent);border-radius:9px;padding:2px;gap:1px}
+.stm-seg button{border:0;background:transparent;color:var(--dsw-alias-label-secondary);border-radius:7px;font-size:12px;padding:4px 11px;cursor:pointer;transition-property:background-color,color;transition-duration:120ms}
+.stm-seg-on{background:var(--dsw-alias-bg-layer-1,var(--dsw-alias-bg-base))!important;color:var(--dsw-alias-label-primary)!important;font-weight:600;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+.stm-send{border:0;border-radius:9px;background:var(--dsw-alias-label-primary);color:var(--dsw-alias-bg-base);font-size:13px;font-weight:600;padding:0 16px;height:32px;cursor:pointer;transition-property:opacity,transform;transition-duration:120ms}
+.stm-send:hover:not(:disabled){opacity:.88}
+.stm-send:active:not(:disabled){transform:scale(.96)}
+.stm-send:disabled{opacity:.4;cursor:default}
+.stm-interrupt{border:0;background:transparent;color:var(--dsw-alias-label-error,#d9534f);border-radius:9px;font-size:12px;height:32px;padding:0 10px;cursor:pointer;transition-property:background-color;transition-duration:120ms}
+.stm-interrupt:hover{background:var(--dsw-alias-bg-layer-2)}
+.stm-compose-hint{font-size:11px;color:var(--dsw-alias-label-secondary);text-wrap:pretty}
+.stm-rail-gear{flex-shrink:0;font-size:12px;color:var(--dsw-alias-label-secondary);opacity:0;border-radius:7px;padding:2px 4px;transition-property:opacity,background-color;transition-duration:120ms}
+.stm-rail-item:hover .stm-rail-gear,.stm-rail-item-on .stm-rail-gear{opacity:.75}
+.stm-rail-gear:hover{opacity:1;background:var(--dsw-alias-bg-layer-1,transparent)}
+.stm-modal-backdrop{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.28);backdrop-filter:blur(2px);animation:stm-fade-in 140ms ease-out}
+@keyframes stm-fade-in{from{opacity:0}to{opacity:1}}
+.stm-modal-card{width:600px;max-width:92vw;max-height:86vh;overflow:auto;background:var(--dsw-alias-bg-layer-1);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 12px 32px -8px rgba(0,0,0,.28),0 32px 64px -16px rgba(0,0,0,.24)}
+.stm-drawer-out{animation:stm-slide-out 180ms cubic-bezier(.4,0,1,1) forwards}
+@keyframes stm-slide-out{from{transform:translateX(0);opacity:1}to{transform:translateX(24px);opacity:0}}
+.stm-drawer{position:absolute;top:0;right:0;bottom:0;width:396px;max-width:92%;z-index:40;display:flex;flex-direction:column;background:var(--dsw-alias-bg-layer-1);border-radius:14px;overflow:hidden;animation:stm-slide-in 200ms cubic-bezier(.2,0,0,1);box-shadow:0 0 0 1px rgba(0,0,0,.06),-8px 0 24px -8px rgba(0,0,0,.2),-24px 0 56px -16px rgba(0,0,0,.16)}
+.stm-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 8px 10px 16px;flex-shrink:0;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.stm-drawer-title{font-size:12px;font-weight:650;letter-spacing:.03em;text-transform:uppercase;color:var(--dsw-alias-label-secondary)}
+.stm-drawer-tabs{display:flex;gap:2px;flex-wrap:wrap;padding:8px 10px;flex-shrink:0;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.stm-drawer-body{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:12px;display:flex;flex-direction:column;gap:9px}
+.stm-item{background:var(--dsw-alias-bg-layer-2,transparent);border-radius:11px;padding:11px 12px;display:flex;flex-direction:column;gap:6px;font-size:12.5px;box-shadow:0 0 0 1px rgba(0,0,0,.04)}
+.stm-item-head{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:var(--dsw-alias-label-secondary);font-size:11px;font-variant-numeric:tabular-nums}
+.stm-item-subject{font-weight:600;color:var(--dsw-alias-label-primary);font-size:13px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;text-wrap:pretty}
+.stm-item-body{color:var(--dsw-alias-label-secondary);line-height:1.7;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;text-wrap:pretty}
 .stm-item-body-open{-webkit-line-clamp:initial}
+.md-p{margin:0}
+.md-h1,.md-h2,.md-h3,.md-h4{margin:14px 0 6px;font-weight:650;color:var(--dsw-alias-label-primary);line-height:1.4}
+.md-h1{font-size:19px}
+.md-h2{font-size:17px}
+.md-h3{font-size:15px}
+.md-h4{font-size:14px}
+.md-list{margin:6px 0;padding-left:22px}
+.md-list li{margin:2px 0}
+.md-code{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;background:var(--dsw-alias-bg-layer-2,#f4f4f4);border-radius:8px;padding:10px 12px;margin:8px 0;overflow-x:auto;white-space:pre}
+.md-inline-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:var(--dsw-alias-bg-layer-2,#f4f4f4);border-radius:4px;padding:1px 5px}
+.md-quote{border-left:2px solid var(--dsw-alias-border-l2);padding:2px 0 2px 12px;margin:8px 0;color:var(--dsw-alias-label-secondary)}
+.md-table{border-collapse:collapse;margin:8px 0;font-size:12.5px;width:100%}
+.md-table th,.md-table td{border:1px solid var(--dsw-alias-border-l1);padding:4px 8px;text-align:left;vertical-align:top}
+.md-table th{background:var(--dsw-alias-bg-layer-2,transparent);font-weight:600}
+.md-hr{border:0;border-top:1px solid var(--dsw-alias-border-l1);margin:12px 0}
+.md-bold{font-weight:650}
+.md-em{font-style:italic}
+.md-link{color:var(--dsw-alias-brand-primary,inherit);text-decoration:underline}
 .stm-drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:92vw;background:var(--dsw-alias-bg-layer-1);border-left:1px solid var(--dsw-alias-border-l1);box-shadow:-12px 0 32px rgba(0,0,0,.18);z-index:60;display:flex;flex-direction:column;animation:stm-slide-in .18s ease-out}
 @keyframes stm-slide-in{from{transform:translateX(100%)}to{transform:translateX(0)}}
 .stm-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--dsw-alias-border-l1)}
@@ -905,32 +955,37 @@ window.__ModuleLoader__.load({
       )
     }
 
-    function MemberRow({
-      member, models, state, onNotice, index, isFirst, isLast,
-      onMove, onDragStart, onDragOver, onDrop, onDragEnd, dragging, onViewChat
-    }) {
+    /** 角色设置弹窗：改角色、优先级、模型、思考强度，设为 Lead 或移出团队。 */
+    function RoleSettings({ state, member, onNotice, onClose }) {
+      const models = state?.models
       const options = modelOptions(models)
       const current = member.model
       const fallback = models?.default
       const initialKey = current
         ? `${current.provider}\u0001${current.model}`
         : fallback ? `${fallback.provider}\u0001${fallback.model}` : ''
-      const [editing, setEditing] = useState(false)
       const [role, setRole] = useState(member.role)
       const [stage, setStage] = useState(String(member.stage))
       const [modelKey, setModelKey] = useState(initialKey)
       const [effort, setEffort] = useState(current?.reasoningEffort ?? '')
-      const status = statusOf(member)
+      const [busy, setBusy] = useState('')
       const selectedOption = options.find(option => option.key === modelKey) ?? null
+      const effortOptions = selectedOption?.efforts ?? []
       const dirtyModel = current === null
         || `${current.provider}\u0001${current.model}` !== modelKey
         || (current.reasoningEffort ?? '') !== effort
+      const status = statusOf(member)
 
       function save() {
         const rosterChanged = role !== member.role || String(stage) !== String(member.stage)
         const tasks = []
         if (rosterChanged) {
-          tasks.push(act(withTeam(state, { kind: 'update-member', sessionId: member.sessionId, role, stage: Number(stage) })))
+          tasks.push(act(withTeam(state, {
+            kind: 'update-member',
+            sessionId: member.sessionId,
+            role,
+            stage: Number.isFinite(Number(stage)) ? Number(stage) : member.stage
+          })))
         }
         if (dirtyModel && selectedOption !== null) {
           tasks.push(act(withTeam(state, {
@@ -941,126 +996,122 @@ window.__ModuleLoader__.load({
             reasoningEffort: effort
           })))
         }
+        if (tasks.length === 0) {
+          onClose()
+          return
+        }
+        setBusy('save')
         Promise.all(tasks).then(results => {
+          setBusy('')
           const failed = results.find(result => !result.ok)
           if (failed) {
-            onNotice(`${t('modelSaveFailed')}: ${failed.error?.message ?? failed.error}`)
+            onNotice(`${t('failed')}: ${failed.error?.message ?? failed.error}`)
             return
           }
-          if (dirtyModel && selectedOption !== null) {
-            onNotice(t('modelSaved', {
-              name: member.name,
-              label: `${selectedOption.name}${effort ? ` · ${effort}` : ''}`
-            }))
-          }
-          setEditing(false)
+          onNotice(dirtyModel ? t('modelSaved', {
+            name: member.name,
+            label: `${selectedOption.name}${effort ? ` · ${effort}` : ''}`
+          }) : t('saveDone'))
+          onClose()
         })
       }
 
-      const chips = []
-      if (member.lead) chips.push(h('span', { key: 'lead', className: 'stm-chip stm-chip-lead' }, t('lead')))
-      if (member.role) chips.push(h('span', { key: 'role', className: 'stm-chip' }, member.role))
-      chips.push(h('span', { key: 'stage', className: 'stm-chip' }, `${t('stage')} ${member.stage}`))
-      const modelText = current
-        ? `${current.model}${current.reasoningEffort ? ` · ${current.reasoningEffort}` : ''}`
-        : null
-      chips.push(h('span', {
-        key: 'model',
-        className: 'stm-chip',
-        title: modelText === null ? t('modelDefault') : `${current.provider}/${current.model}`
-      }, modelText === null
-        ? (fallback ? t('modelDefaultLabel', { name: fallback.model }) : t('modelDefault'))
-        : modelText))
-      if (member.unread > 0) chips.push(h('span', { key: 'unread', className: 'stm-chip' }, `${member.unread} ${t('unread')}`))
+      function setLead() {
+        setBusy('lead')
+        act(withTeam(state, { kind: 'set-lead', sessionId: member.sessionId })).then(result => {
+          setBusy('')
+          if (result.ok === false) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+          else onNotice(t('setLeadDone'))
+          onClose()
+        })
+      }
 
-      const effortOptions = selectedOption?.efforts ?? []
-      return h('div', {
-        className: `stm-row${dragging === true ? ' stm-row-drag' : ''}`,
-        onDragOver,
-        onDrop
-      },
-        h('span', {
-          className: 'stm-drag',
-          draggable: true,
-          title: t('dragHint'),
-          onDragStart: event => {
-            try { event.dataTransfer?.setData('text/plain', member.sessionId) } catch { /* 忽略 */ }
-            if (typeof onDragStart === 'function') onDragStart()
-          },
-          onDragEnd
-        }, '⋮⋮'),
-        h('span', { className: `stm-dot stm-dot-${status.kind}` }),
-        h('div', { className: 'stm-grow' },
-          h('div', { className: 'stm-name' }, member.name, chips),
-          h('div', { className: 'stm-meta' },
-            h('span', null, status.label),
-            h('span', { className: 'stm-mono', title: member.sessionId, onClick: () => copyText(member.sessionId) }, member.sessionId)
+      function remove() {
+        if (typeof window.confirm === 'function' && !window.confirm(t('removeConfirm', { name: member.name }))) return
+        setBusy('remove')
+        act(withTeam(state, { kind: 'remove-member', sessionId: member.sessionId })).then(result => {
+          setBusy('')
+          if (result.ok === false) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+          else onNotice(t('removeRoleDone'))
+          onClose()
+        })
+      }
+
+      return h('div', { className: 'stm-modal-backdrop', onClick: onClose },
+        h('div', { className: 'stm-modal-card', onClick: event => event.stopPropagation() },
+          h('div', { className: 'stm-inline', style: { justifyContent: 'space-between', alignItems: 'flex-start' } },
+            h('div', null,
+              h('h3', { className: 'stm-section-title', style: { margin: 0 } }, `${member.name} · ${t('roleSettings')}`),
+              h('div', { className: 'stm-hint', style: { marginTop: '4px' } }, t('roleSettingsHint'))
+            ),
+            h('button', { className: 'stm-icon-btn', onClick: onClose }, '✕')
           ),
-          editing
-            ? h('div', { className: 'stm-inline', style: { marginTop: '6px' } },
+          h('div', { className: 'stm-inline', style: { marginTop: '12px', gap: '8px' } },
+            h('span', { className: `stm-dot stm-dot-${status.kind}` }),
+            h('span', { className: 'stm-chip' }, status.label),
+            h('span', { className: 'stm-chip', title: member.sessionId }, member.sessionId)
+          ),
+          h('div', { className: 'stm-inline', style: { marginTop: '12px', gap: '10px', flexWrap: 'wrap' } },
+            h('label', { className: 'stm-field', style: { width: '160px' } }, t('roleLabel'),
               h('input', {
                 className: 'stm-input',
                 value: role,
                 placeholder: t('rolePlaceholder'),
-                onChange: event => setRole(event.target.value),
-                style: { width: '120px' }
-              }),
+                onChange: event => setRole(event.target.value)
+              })
+            ),
+            h('label', { className: 'stm-field', style: { width: '110px' } }, t('stage'),
               h('input', {
                 className: 'stm-input',
                 value: stage,
                 type: 'number',
                 title: t('priorityHint'),
-                onChange: event => setStage(event.target.value),
-                style: { width: '70px' }
-              }),
-              h('select', {
-                className: 'stm-select',
-                value: modelKey,
-                style: { width: '230px' },
-                onChange: event => {
-                  setModelKey(event.target.value)
-                  const option = options.find(candidate => candidate.key === event.target.value)
-                  setEffort(option?.defaultEffort ?? '')
-                }
-              }, options.length === 0
-                ? h('option', { value: '', key: '' }, t('modelDefault'))
-                : options.map(option => h('option', { value: option.key, key: option.key },
-                  `${option.providerName} · ${option.name}`))),
-              effortOptions.length === 0
-                ? null
+                onChange: event => setStage(event.target.value)
+              })
+            )
+          ),
+          h('div', { className: 'stm-inline', style: { marginTop: '10px', gap: '10px', flexWrap: 'wrap' } },
+            h('label', { className: 'stm-field', style: { flex: '1', minWidth: '220px' } }, t('model'),
+              options.length === 0
+                ? h('select', { className: 'stm-select', value: '', disabled: true },
+                  h('option', { value: '', key: '' }, t('noModelCatalog')))
                 : h('select', {
                   className: 'stm-select',
+                  value: modelKey,
+                  onChange: event => {
+                    const key = event.target.value
+                    setModelKey(key)
+                    const option = options.find(candidate => candidate.key === key) ?? null
+                    setEffort(option?.defaultEffort ?? '')
+                  }
+                }, options.map(option => h('option', { value: option.key, key: option.key },
+                  `${option.providerName} · ${option.name}`)))
+            ),
+            effortOptions.length === 0
+              ? null
+              : h('label', { className: 'stm-field', style: { width: '140px' } }, t('effort'),
+                h('select', {
+                  className: 'stm-select',
                   value: effort,
-                  style: { width: '120px' },
                   onChange: event => setEffort(event.target.value)
                 },
                 h('option', { value: '', key: '' }, t('effortDefault')),
-                effortOptions.map(item => h('option', { value: item.id, key: item.id }, item.name))
-                ),
-              h(Button, { onClick: save, primary: true }, t('save')),
-              h(Button, { onClick: () => setEditing(false), ghost: true }, t('cancel'))
+                effortOptions.map(item => h('option', { value: item.id, key: item.id }, item.name)))
+              )
+          ),
+          h('div', { className: 'stm-inline', style: { marginTop: '16px', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' } },
+            h('div', { className: 'stm-inline', style: { gap: '6px' } },
+              member.lead
+                ? h('span', { className: 'stm-chip stm-chip-lead' }, t('lead'))
+                : h(Button, { ghost: true, onClick: setLead, disabled: busy !== '' }, t('setLead')),
+              h(Button, { ghost: true, onClick: remove, disabled: busy !== '' }, t('remove'))
+            ),
+            h('div', { className: 'stm-inline', style: { gap: '6px' } },
+              h(Button, { ghost: true, onClick: onClose }, t('cancel')),
+              h(Button, { primary: true, onClick: save, disabled: busy !== '' }, busy === 'save' ? '…' : t('save'))
             )
-            : null
-        ),
-        h(Button, { ghost: true, onClick: () => { if (typeof onViewChat === 'function') onViewChat(member.sessionId) } }, t('viewChat')),
-        h(Button, { ghost: true, onClick: () => { if (openSession) openSession(member.sessionId) } }, t('open')),
-        h(Button, { ghost: true, onClick: () => setEditing(true) }, t('role')),
-        h(Button, { ghost: true, disabled: isFirst === true, onClick: () => { if (typeof onMove === 'function') onMove(-1) } }, '↑'),
-        h(Button, { ghost: true, disabled: isLast === true, onClick: () => { if (typeof onMove === 'function') onMove(1) } }, '↓'),
-        member.lead
-          ? null
-          : h(Button, {
-            ghost: true,
-            onClick: () => act(withTeam(state, { kind: 'set-lead', sessionId: member.sessionId })).then(result => {
-              if (!result.ok) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
-            })
-          }, t('setLead')),
-        h(Button, {
-          ghost: true,
-          onClick: () => act(withTeam(state, { kind: 'remove-member', sessionId: member.sessionId })).then(result => {
-            if (!result.ok) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
-          })
-        }, t('remove'))
+          )
+        )
       )
     }
 
@@ -1656,7 +1707,7 @@ window.__ModuleLoader__.load({
     }
 
     /** 左侧角色栏：一行一个角色，点一下切换对话。 */
-    function MemberRail({ state, selectedId, onSelect, onAdd, adding }) {
+    function MemberRail({ state, selectedId, onSelect, onAdd, adding, onSettings }) {
       const members = state?.team?.members ?? []
       return h('div', { className: 'stm-rail' },
         h('div', { className: 'stm-rail-head' },
@@ -1682,11 +1733,157 @@ window.__ModuleLoader__.load({
                 ),
                 h('div', { className: 'stm-rail-sub' }, `${status.label} · ${parts.join(' · ')}`)
               ),
-              member.unread > 0 ? h('span', { className: 'stm-rail-badge' }, `${member.unread}`) : null
+              member.unread > 0 ? h('span', { className: 'stm-rail-badge' }, `${member.unread}`) : null,
+              h('span', {
+                className: 'stm-rail-gear',
+                title: t('roleSettings'),
+                onClick: event => {
+                  event.stopPropagation()
+                  if (typeof onSettings === 'function') onSettings(member.sessionId)
+                }
+              }, '⚙')
             )
           })
         )
       )
+    }
+
+    /** 去掉 Markdown 标记，用于标题等短文本。 */
+    function mdToPlain(text) {
+      return String(text ?? '')
+        .replace(/[#*`>|~_]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+    }
+
+    /** 行内 Markdown：**粗**、*斜*、`代码`、[链接](url)。 */
+    function renderInline(text, keyPrefix) {
+      const nodes = []
+      const pattern = /(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\)|~~[^~]+~~|\*[^*]+\*)/g
+      let last = 0
+      let index = 0
+      for (const match of String(text).matchAll(pattern)) {
+        const token = match[0]
+        const at = match.index ?? 0
+        if (at > last) nodes.push(String(text).slice(last, at))
+        last = at + token.length
+        const key = `${keyPrefix}-i${index}`
+        index += 1
+        if (token.startsWith('**') && token.endsWith('**')) {
+          nodes.push(h('strong', { key, className: 'md-bold' }, token.slice(2, -2)))
+        } else if (token.startsWith('`') && token.endsWith('`')) {
+          nodes.push(h('code', { key, className: 'md-inline-code' }, token.slice(1, -1)))
+        } else if (token.startsWith('~~') && token.endsWith('~~')) {
+          nodes.push(h('s', { key }, token.slice(2, -2)))
+        } else if (token.startsWith('[')) {
+          const parts = token.slice(1, -1).split('](')
+          nodes.push(h('a', { key, className: 'md-link', href: parts[1], target: '_blank', rel: 'noreferrer' }, parts[0]))
+        } else if (token.startsWith('*') && token.length > 2) {
+          nodes.push(h('em', { key, className: 'md-em' }, token.slice(1, -1)))
+        } else {
+          nodes.push(token)
+        }
+      }
+      if (last < String(text).length) nodes.push(String(text).slice(last))
+      return nodes
+    }
+
+    /** 极简 Markdown 渲染：标题、列表、代码块、表格、引用、分隔线、行内样式。 */
+    function renderMarkdown(text) {
+      const lines = String(text ?? '').split('\n')
+      const blocks = []
+      let i = 0
+      let key = 0
+      const nextKey = () => `md-${key++}`
+
+      function isTableRow(line) {
+        return /^\s*\|.*\|\s*$/.test(line)
+      }
+      function isTableSep(line) {
+        return /^\s*\|(?:\s*:?-{2,}:?\s*\|)+\s*$/.test(line)
+      }
+      function splitRow(line) {
+        return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim())
+      }
+      function isBlockStart(line) {
+        return /^(#{1,4})\s|^\s*```|^\s*>|^\s*([-*])\s|^\s*\d+\.\s/.test(line)
+          || isTableRow(line)
+          || /^(---|\*\*\*|___)$/.test(line.trim())
+      }
+
+      while (i < lines.length) {
+        const line = lines[i]
+        if (line.trim() === '') { i += 1; continue }
+        if (/^\s*```/.test(line)) {
+          const lang = line.trim().slice(3).trim()
+          i += 1
+          const code = []
+          while (i < lines.length && !/^\s*```/.test(lines[i])) { code.push(lines[i]); i += 1 }
+          i += 1
+          blocks.push(h('pre', { key: nextKey(), className: 'md-code', 'data-lang': lang }, code.join('\n')))
+          continue
+        }
+        if (isTableRow(line) && i + 1 < lines.length && isTableSep(lines[i + 1])) {
+          const header = splitRow(line)
+          i += 2
+          const rows = []
+          while (i < lines.length && isTableRow(lines[i])) { rows.push(splitRow(lines[i])); i += 1 }
+          const headCells = header.map((cell, ci) => h('th', { key: ci }, renderInline(cell, `th${ci}`)))
+          const bodyRows = rows.map((row, ri) => h('tr', { key: ri },
+            row.map((cell, ci) => h('td', { key: ci }, renderInline(cell, `td${ri}-${ci}`)))))
+          blocks.push(h('table', { key: nextKey(), className: 'md-table' },
+            h('thead', null, h('tr', null, headCells)),
+            h('tbody', null, bodyRows)
+          ))
+          continue
+        }
+        const heading = line.match(/^(#{1,4})\s+(.+)$/)
+        if (heading !== null) {
+          const level = Math.min(4, heading[1].length)
+          blocks.push(h(`h${level}`, { key: nextKey(), className: `md-h${level}` }, renderInline(heading[2], `h${key}`)))
+          i += 1
+          continue
+        }
+        if (/^\s*>-?\s?/.test(line)) {
+          const quote = []
+          while (i < lines.length && /^\s*>/.test(lines[i])) { quote.push(lines[i].replace(/^\s*>\s?/, '')); i += 1 }
+          blocks.push(h('div', { key: nextKey(), className: 'md-quote md-p' }, renderInline(quote.join('\n'), `q${key}`)))
+          continue
+        }
+        const bullet = line.match(/^\s*([-*])\s+(.+)$/)
+        const numbered = line.match(/^\s*(\d+)\.\s+(.+)$/)
+        if (bullet !== null || numbered !== null) {
+          const ordered = numbered !== null
+          const items = []
+          while (i < lines.length) {
+            const b = lines[i].match(/^\s*([-*])\s+(.+)$/)
+            const n = lines[i].match(/^\s*(\d+)\.\s+(.+)$/)
+            if ((ordered && n === null) || (ordered === false && b === null)) break
+            items.push((ordered ? n[2] : b[2]))
+            i += 1
+          }
+          blocks.push(h(ordered ? 'ol' : 'ul', { key: nextKey(), className: 'md-list' },
+            items.map((item, ii) => h('li', { key: ii }, renderInline(item, `li${ii}`))))
+          )
+          continue
+        }
+        if (/^(---|\*\*\*|___)$/.test(line.trim())) {
+          blocks.push(h('hr', { key: nextKey(), className: 'md-hr' }))
+          i += 1
+          continue
+        }
+        const paragraph = []
+        while (i < lines.length && lines[i].trim() !== '' && isBlockStart(lines[i]) === false) {
+          paragraph.push(lines[i])
+          i += 1
+        }
+        if (paragraph.length > 0) {
+          blocks.push(h('p', { key: nextKey(), className: 'md-p' }, renderInline(paragraph.join('\n'), `p${key}`)))
+        } else {
+          i += 1
+        }
+      }
+      return blocks
     }
 
     /** 一条对话消息。 */
@@ -1720,16 +1917,19 @@ window.__ModuleLoader__.load({
           h('button', { className: 'stm-tab', style: { alignSelf: 'flex-start' }, onClick: onToggle }, expanded ? t('collapseBody') : t('expand'))
         )
       }
+      const longAssistant = text.length > 1400
       return h('div', { className: 'stm-msg' },
         h('div', { className: 'stm-msg-role' },
           h('span', null, 'Assistant'),
           message.time > 0 ? h('span', null, new Date(message.time).toLocaleTimeString('zh-CN', { hour12: false })) : null
         ),
         h('div', {
-          className: `stm-msg-text${expanded !== true && text.length > 1600 ? ' stm-msg-clamp' : ''}`,
-          onClick: text.length > 1600 ? onToggle : undefined,
-          style: text.length > 1600 ? { cursor: 'pointer' } : undefined
-        }, text),
+          className: 'stm-msg-md',
+          style: longAssistant === true && expanded !== true ? { maxHeight: '420px', overflow: 'hidden' } : undefined
+        }, renderMarkdown(text)),
+        longAssistant
+          ? h('button', { className: 'stm-tab', style: { alignSelf: 'flex-start' }, onClick: onToggle }, expanded ? t('collapseBody') : t('expand'))
+          : null,
         message.tools !== undefined && message.tools.length > 0
           ? h('div', { className: 'stm-msg-tools' },
             h('span', null, `${t('tools')}:`),
@@ -1740,7 +1940,7 @@ window.__ModuleLoader__.load({
     }
 
     /** 中间对话区。 */
-    function ConversationPane({ state, sessionId, draft, onDraft, onNotice, openSession, sideOpen, onToggleSide, taskCount, reportCount }) {
+    function ConversationPane({ state, sessionId, draft, onDraft, onNotice, openSession, sideOpen, onToggleSide, taskCount, reportCount, onSettings }) {
       const member = (state?.team?.members ?? []).find(candidate => candidate.sessionId === sessionId) ?? null
       const [transcript, setTranscript] = useState(null)
       const [live, setLive] = useState(null)
@@ -1911,12 +2111,13 @@ window.__ModuleLoader__.load({
             )
           ),
           h('div', { className: 'stm-chat-actions' },
-            h(Button, { ghost: true, onClick: () => { if (openSession) openSession(sessionId) } }, t('drawerOpenChat')),
-            h(Button, {
-              ghost: true,
+            h('button', { className: 'stm-ghost-btn', onClick: () => { if (typeof onSettings === 'function') onSettings(sessionId) } }, `⚙ ${t('roleSettings')}`),
+            h('button', { className: 'stm-ghost-btn', onClick: () => { if (openSession) openSession(sessionId) } }, t('drawerOpenChat')),
+            h('button', {
+              className: 'stm-ghost-btn',
               onClick: onToggleSide,
               title: t('panelExpand')
-            }, t('sideTrigger', { n: taskCount, m: reportCount }), sideOpen ? ' ▸' : ' ◂'),
+            }, `${t('sideTrigger', { n: taskCount, m: reportCount })} ${sideOpen ? '▸' : '◂'}`),
             h(MenuButton, {
               title: t('chatMenu'),
               items: [
@@ -2111,6 +2312,7 @@ window.__ModuleLoader__.load({
       const [draft, setDraft] = useState('')
       const [selectedId, setSelectedId] = useState('')
       const [sideOpen, setSideOpen] = useState(false)
+      const [settingsId, setSettingsId] = useState('')
       const [sideClosing, setSideClosing] = useState(false)
       const sideTimer = useRef(null)
       const team = state?.team
@@ -2258,7 +2460,8 @@ window.__ModuleLoader__.load({
               selectedId: effectiveId,
               onSelect: id => setSelectedId(id),
               onAdd: () => setAgentOpen(!agentOpen),
-              adding: agentOpen
+              adding: agentOpen,
+              onSettings: id => setSettingsId(id)
             }),
             h(ConversationPane, {
               state,
@@ -2270,7 +2473,8 @@ window.__ModuleLoader__.load({
               sideOpen: sideOpen || sideClosing,
               onToggleSide: () => { if (sideOpen) closeSide(); else openSide() },
               taskCount: openTaskCount,
-              reportCount: unreadCount
+              reportCount: unreadCount,
+              onSettings: id => setSettingsId(id)
             }),
             sideOpen || sideClosing
               ? h(SideDrawer, {
@@ -2286,9 +2490,22 @@ window.__ModuleLoader__.load({
               })
               : null
           ),
+          settingsId === ''
+            ? null
+            : (() => {
+              const target = team.members.find(member => member.sessionId === settingsId)
+              return target === undefined
+                ? null
+                : h(RoleSettings, {
+                  state,
+                  member: target,
+                  onNotice,
+                  onClose: () => setSettingsId('')
+                })
+            })(),
           agentOpen
-            ? h('div', { className: 'stm-modal' },
-              h('div', { className: 'stm-modal-body' },
+            ? h('div', { className: 'stm-modal-backdrop' },
+              h('div', { className: 'stm-modal-card' },
                 h('div', { className: 'stm-inline', style: { justifyContent: 'space-between' } },
                   h('h3', { className: 'stm-section-title', style: { margin: 0 } }, t('addAgentTitle')),
                   h(Button, { ghost: true, onClick: () => setAgentOpen(false) }, t('cancel'))
@@ -2298,8 +2515,8 @@ window.__ModuleLoader__.load({
             )
             : null,
           addOpen
-            ? h('div', { className: 'stm-modal' },
-              h('div', { className: 'stm-modal-body' },
+            ? h('div', { className: 'stm-modal-backdrop' },
+              h('div', { className: 'stm-modal-card' },
                 h('div', { className: 'stm-inline', style: { justifyContent: 'space-between' } },
                   h('h3', { className: 'stm-section-title', style: { margin: 0 } }, t('addMember')),
                   h(Button, { ghost: true, onClick: () => setAddOpen(false) }, t('cancel'))
