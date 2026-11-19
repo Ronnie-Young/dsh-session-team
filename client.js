@@ -1972,7 +1972,14 @@ window.__ModuleLoader__.load({
       let current = null
       for (const message of messages) {
         if (message.role === 'user') {
-          turns.push({ kind: 'user', seq: message.seq, time: message.time, text: message.text })
+          turns.push({
+            kind: 'user',
+            seq: message.seq,
+            time: message.time,
+            text: message.text,
+            injected: message.injected === true,
+            summary: message.summary ?? ''
+          })
           current = null
           continue
         }
@@ -2029,11 +2036,12 @@ window.__ModuleLoader__.load({
 
     /** 用户一条：右侧气泡。 */
     function UserTurn({ turn }) {
-      const isSystem = turn.text.includes('<system-reminder>')
+      const isSystem = turn.injected === true || turn.text.includes('<system-reminder>')
       if (isSystem === true) {
-        const summary = turn.text.split('\n').find(line => line.trim() !== '') ?? t('systemBlock')
+        const firstLine = turn.text.split('\n').find(line => line.trim() !== '') ?? ''
+        const label = turn.summary !== '' ? turn.summary : mdToPlain(firstLine).slice(0, 60)
         return h('details', { className: 'stm-sys' },
-          h('summary', null, `${t('injectedHint')} · ${mdToPlain(summary).slice(0, 60)}`),
+          h('summary', null, `${t('injectedHint')}${label === '' ? '' : ` · ${label}`}`),
           h('div', { className: 'stm-sys-body' }, turn.text)
         )
       }

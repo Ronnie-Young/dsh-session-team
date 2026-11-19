@@ -553,10 +553,16 @@ export async function apply(ctx, config) {
       if (event.type === 'user/message') {
         const text = textOfBlocks(data.content)
         if (text !== '') {
+          const source = data.source ?? null
+          const injected = source !== null && source !== undefined && source.kind !== 'user'
           messages.push({
             seq,
             time,
             role: 'user',
+            injected,
+            summary: typeof source?.form === 'object' && source.form?.summary !== undefined
+              ? String(source.form.summary)
+              : '',
             text: text.length > 6000 ? `${text.slice(0, 6000)}\n…` : text,
           })
         }
