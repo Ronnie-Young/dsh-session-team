@@ -502,9 +502,12 @@ window.__ModuleLoader__.load({
 .stm-interrupt{border:0;background:transparent;color:var(--dsw-alias-label-error,#d9534f);border-radius:9px;font-size:12px;height:32px;padding:0 10px;cursor:pointer;transition-property:background-color;transition-duration:120ms}
 .stm-interrupt:hover{background:var(--dsw-alias-bg-layer-2)}
 .stm-compose-hint{font-size:11px;color:var(--dsw-alias-label-secondary);text-wrap:pretty}
-.stm-rail-gear{flex-shrink:0;font-size:12px;color:var(--dsw-alias-label-secondary);opacity:0;border-radius:7px;padding:2px 4px;transition-property:opacity,background-color;transition-duration:120ms}
-.stm-rail-item:hover .stm-rail-gear,.stm-rail-item-on .stm-rail-gear{opacity:.75}
-.stm-rail-gear:hover{opacity:1;background:var(--dsw-alias-bg-layer-1,transparent)}
+.stm-rail-gear{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;font-size:16px;line-height:1;color:var(--dsw-alias-label-secondary);border-radius:9px;transition-property:background-color,color;transition-duration:120ms}
+.stm-rail-gear:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-bg-layer-2))}
+.stm-chip-btn{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border:1px solid var(--dsw-alias-border-l1);border-radius:9px;font-size:12.5px;font-weight:500;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2,transparent);cursor:pointer;transition-property:background-color,transform;transition-duration:120ms}
+.stm-chip-btn:hover{background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-bg-layer-2))}
+.stm-chip-btn:active{transform:scale(.96)}
+.stm-chip-btn-icon{font-size:14px;line-height:1}
 .stm-modal-backdrop{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.28);backdrop-filter:blur(2px);animation:stm-fade-in 140ms ease-out}
 @keyframes stm-fade-in{from{opacity:0}to{opacity:1}}
 .stm-modal-card{width:600px;max-width:92vw;max-height:86vh;overflow:auto;background:var(--dsw-alias-bg-layer-1);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 12px 32px -8px rgba(0,0,0,.28),0 32px 64px -16px rgba(0,0,0,.24)}
@@ -1737,11 +1740,13 @@ window.__ModuleLoader__.load({
               h('span', {
                 className: 'stm-rail-gear',
                 title: t('roleSettings'),
+                role: 'button',
+                'aria-label': t('roleSettings'),
                 onClick: event => {
                   event.stopPropagation()
                   if (typeof onSettings === 'function') onSettings(member.sessionId)
                 }
-              }, '⚙')
+              }, '⚙️')
             )
           })
         )
@@ -2111,7 +2116,11 @@ window.__ModuleLoader__.load({
             )
           ),
           h('div', { className: 'stm-chat-actions' },
-            h('button', { className: 'stm-ghost-btn', onClick: () => { if (typeof onSettings === 'function') onSettings(sessionId) } }, `⚙ ${t('roleSettings')}`),
+            h('button', {
+              className: 'stm-chip-btn',
+              title: t('roleSettings'),
+              onClick: () => { if (typeof onSettings === 'function') onSettings(sessionId) }
+            }, h('span', { className: 'stm-chip-btn-icon' }, '⚙'), t('roleSettings')),
             h('button', { className: 'stm-ghost-btn', onClick: () => { if (openSession) openSession(sessionId) } }, t('drawerOpenChat')),
             h('button', {
               className: 'stm-ghost-btn',
