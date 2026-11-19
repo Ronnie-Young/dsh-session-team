@@ -622,13 +622,16 @@ window.__ModuleLoader__.load({
 @keyframes stm-fade-out{from{opacity:1}to{opacity:0}}
 .stm-dialog{display:flex;flex-direction:column;min-height:0;max-height:min(78vh,720px)}
 .stm-dialog-body{display:flex;flex-direction:column;gap:12px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:2px 2px 4px}
-.stm-dialog-hint{margin:0;font-size:12px;line-height:1.6;color:var(--dsw-alias-label-secondary)}
+.stm-dialog-hint{margin:0;font-size:12.5px;line-height:1.65;color:var(--dsw-alias-label-secondary);text-wrap:pretty}
+.stm-dialog-title{margin:0;font-size:15px;font-weight:650;letter-spacing:-.01em;color:var(--dsw-alias-label-primary)}
+.stm-dialog-sub{margin:2px 0 0;font-size:11.5px;color:var(--dsw-alias-label-secondary)}
 .stm-dialog-empty{padding:20px;text-align:center;font-size:12.5px;color:var(--dsw-alias-label-secondary);border:1px dashed var(--dsw-alias-border-l2);border-radius:10px}
-.stm-field-block{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--dsw-alias-label-secondary);min-width:0}
+.stm-field-block{display:flex;flex-direction:column;gap:5px;font-size:11px;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:var(--dsw-alias-label-secondary);min-width:0}
 .stm-field-block .stm-input,.stm-field-block .stm-select{width:100%;height:32px;box-sizing:border-box}
-.stm-role-card{border-radius:12px;background:var(--dsw-alias-bg-layer-2,transparent);box-shadow:inset 0 0 0 1px rgba(0,0,0,.045);padding:10px 12px;display:flex;flex-direction:column;gap:9px}
+.stm-role-card{border-radius:12px;background:var(--dsw-alias-bg-layer-2,transparent);box-shadow:inset 0 0 0 1px rgba(0,0,0,.05);padding:12px 14px;display:flex;flex-direction:column;gap:10px;animation:stm-row-in 160ms cubic-bezier(.2,0,0,1)}
+@keyframes stm-row-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .stm-role-card-head{display:flex;align-items:center;gap:8px}
-.stm-role-card-index{width:18px;height:18px;border-radius:6px;background:var(--stm-brand-weak,transparent);color:var(--stm-brand-hover);font-size:10.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-variant-numeric:tabular-nums}
+.stm-role-card-index{width:20px;height:20px;border-radius:7px;background:var(--stm-brand-weak,transparent);color:var(--stm-brand-hover);font-size:10.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-variant-numeric:tabular-nums}
 .stm-role-name{flex:1;min-width:0;font-weight:600}
 .stm-lead-toggle{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--dsw-alias-label-secondary);white-space:nowrap;cursor:pointer}
 .stm-role-remove{border:0;background:transparent;color:var(--dsw-alias-label-secondary);width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition-property:background-color,color;transition-duration:120ms}
@@ -1455,6 +1458,8 @@ window.__ModuleLoader__.load({
       const [cwd, setCwd] = useState(team?.cwd || state?.defaultCwd || '')
       const [busy, setBusy] = useState(false)
       const canCreate = state?.creations?.canCreate !== false
+      const bodyRef = useRef(null)
+      const focusId = useRef('')
       const [rows, setRows] = useState(() => {
         if (agentDraft.rows.length === 0) {
           agentDraft.rows = [draftRow({ stage: team?.members?.length ?? 0, modelKey: fallbackKey, preset: presetDefault })]
@@ -1471,12 +1476,21 @@ window.__ModuleLoader__.load({
       }, [team?.id])
 
       function addRow() {
-        trace('dialog:add-row', { from: agentDraft.rows.length })
-        setRows(previous => [...previous, draftRow({
-          stage: previous.length,
-          modelKey: fallbackKey,
-          preset: presetDefault
-        })])
+        const row = draftRow({ stage: rows.length, modelKey: fallbackKey, preset: presetDefault })
+        focusId.current = row.id
+        trace('dialog:add-row', { from: rows.length, id: row.id })
+        setRows(previous => [...previous, row])
+      }
+
+      function focusNewRow(element) {
+        if (element === null || element === undefined) return
+        if (focusId.current === '') return
+        focusId.current = ''
+        try {
+          element.focus({ preventScroll: true })
+          const body = bodyRef.current
+          if (body !== null && body !== undefined) body.scrollTop = body.scrollHeight
+        } catch { /* 忽略 */ }
       }
 
       function patch(id, change) {
@@ -1526,8 +1540,7 @@ window.__ModuleLoader__.load({
       }
 
       return h('div', { className: 'stm-dialog' },
-        h('div', { className: 'stm-dialog-body' },
-          h('p', { className: 'stm-dialog-hint' }, t('addAgentHint')),
+        h('div', { className: 'stm-dialog-body', ref: bodyRef },
           h('label', { className: 'stm-field-block' }, t('cwd'),
             h('input', {
               className: 'stm-input',
@@ -1553,6 +1566,7 @@ window.__ModuleLoader__.load({
                     className: 'stm-input stm-role-name',
                     value: row.name,
                     placeholder: t('memberName'),
+                    ref: element => focusNewRow(element),
                     onChange: event => patch(row.id, { name: event.target.value })
                   }),
                   h('label', { className: 'stm-lead-toggle' },
@@ -2972,8 +2986,11 @@ window.__ModuleLoader__.load({
               onClick: event => { if (event.target === event.currentTarget) closeAgentDialog() }
             },
               h('div', { className: `stm-modal-card${agentClosing === true ? ' stm-modal-out' : ''}` },
-                h('div', { className: 'stm-inline', style: { justifyContent: 'space-between', alignItems: 'flex-start' } },
-                  h('h3', { className: 'stm-section-title', style: { margin: 0 } }, t('addAgentTitle')),
+                h('div', { className: 'stm-inline', style: { justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' } },
+                  h('div', null,
+                    h('h2', { className: 'stm-dialog-title' }, t('addAgentTitle')),
+                    h('p', { className: 'stm-dialog-sub' }, t('addAgentHint'))
+                  ),
                   h('button', { className: 'stm-icon-btn', onClick: closeAgentDialog, title: t('cancel') }, h(Icon, { name: 'close' }))
                 ),
                 h(AgentRoleForm, {
