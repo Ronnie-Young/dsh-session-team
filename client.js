@@ -764,6 +764,46 @@ window.__ModuleLoader__.load({
       return null
     }
 
+    /** 渲染兜底：任何组件抛错都显示错误卡片，而不是整页白屏。 */
+    class PanelBoundary extends React.Component {
+      constructor(props) {
+        super(props)
+        this.state = { error: null }
+      }
+
+      static getDerivedStateFromError(error) {
+        return { error }
+      }
+
+      componentDidCatch(error, info) {
+        try {
+          console.error('[dsh-session-team] render failed:', error, info)
+        } catch { /* 忽略 */ }
+      }
+
+      render() {
+        if (this.state.error !== null) {
+          const detail = String(this.state.error?.stack ?? this.state.error)
+          return h('div', { className: 'stm-page' },
+            h('div', { className: 'stm-wrap' },
+              h('div', { className: 'stm-card' },
+                h('h3', { className: 'stm-section-title' }, '界面渲染出错'),
+                h('div', { className: 'stm-hint' }, '把下面的信息发给开发者即可定位；点「重新加载」可恢复。'),
+                h('pre', {
+                  className: 'stm-notice stm-notice-error',
+                  style: { whiteSpace: 'pre-wrap', maxHeight: '360px', overflow: 'auto', marginTop: '8px' }
+                }, detail),
+                h('div', { className: 'stm-actions', style: { marginTop: '10px' } },
+                  h(Button, { onClick: () => { if (typeof location !== 'undefined') location.reload() } }, '重新加载')
+                )
+              )
+            )
+          )
+        }
+        return this.props.children ?? null
+      }
+    }
+
     // ---- 小组件 ----
     function Button({ children, onClick, disabled, primary, ghost, style, className, title }) {
       const base = `stm-btn${primary ? ' stm-btn-primary' : ''}${ghost ? ' stm-btn-ghost' : ''}`
@@ -2755,7 +2795,9 @@ window.__ModuleLoader__.load({
         ctx.slots.inject('sidebar.panellist', () =>
           ctx.slots.register({ name: 'sidebar.panellist', id: PANEL_KEY, order: 30, label: () => t('panelLabel'), locale: NS }, PanelIcon)
         )
-        ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: PANEL_KEY, locale: NS }, TeamPanel))
+        ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: PANEL_KEY, locale: NS }, function TeamPanelSafe() {
+          return h(PanelBoundary, null, h(TeamPanel))
+        }))
         const uiWorkspace = ctx.get('uiWorkspace')
         if (uiWorkspace && typeof uiWorkspace.openSession === 'function') {
           openSession = sessionId => uiWorkspace.openSession(sessionId)
