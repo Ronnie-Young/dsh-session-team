@@ -577,6 +577,150 @@ export async function apply(ctx, config) {
     }
   }
 
+  // ---- 角色对话：发消息 / 中断 / 流式输出 ----
+
+  /** 正在监听的会话：sessionId -> { abort, buffer, lastReadAt }。 */
+  const watchers = new Map()
+  const LIVE_TEXT_LIMIT = 4000
+  let watcherTimer = null
+
+  /** 把 assistant-stream 的 chunk 折进缓冲区。 */
+  function applyStreamChunk(buffer, chunk) {
+    if (chunk === null || typeof chunk !== 'object') return
+    if (chunk.type === 'text-delta' && typeof chunk.text === 'string') {
+      buffer.text = (buffer.text + chunk.text).slice(-LIVE_TEXT_LIMIT)
+    } else if (chunk.type === 'reasoning-delta' && typeof chunk.text === 'string') {
+      buffer.reasoning = (buffer.reasoning + chunk.text).slice(-LIVE_TEXT_LIMIT)
+    } else if (chunk.type === 'tool-call-delta' && typeof chunk.name === 'string' && chunk.name !== '') {
+      if (!buffer.tools.includes(chunk.name)) buffer.tools = [...buffer.tools, chunk.name].slice(-8)
+    }
+  }
+
+  /** 应用一帧流式输出。 */
+  function applyStreamFrame(buffer, frame) {
+    if (frame === null || typeof frame !== 'object') return
+    if (frame.type === 'start') {
+      buffer.text = ''
+      buffer.reasoning = ''
+      buffer.tools = []
+      return
+    }
+    if (frame.type === 'end') {
+      buffer.text = ''
+      buffer.reasoning = ''
+      buffer.tools = []
+      return
+    }
+    if (frame.type === 'chunk') applyStreamChunk(buffer, frame.chunk)
+  }
+
+  /** 订阅一个会话的实时状态与流式文本；重复调用会替换旧订阅。 */
+  function startWatch(sessionId) {
+    const controller = ctx.get('sessionController')
+    if (!controller || typeof controller.follow !== 'function') {
+      throw new Error('sessionController.follow 不可用，无法查看流式输出')
+    }
+    stopWatch(sessionId)
+    const abort = new AbortController()
+    const buffer = { text: '', reasoning: '', tools: [], updatedAt: Date.now(), error: '' }
+    watchers.set(sessionId, { abort, buffer, lastReadAt: Date.now() })
+    const signal = abort.signal
+    ;(async () => {
+      try {
+        const stream = controller.follow({
+          address: { kind: 'session', sessionId },
+          maxMessages: 1,
+          activate: false,
+          assistantStream: true,
+        }, signal)
+        for await (const frame of stream) {
+          const entry = watchers.get(sessionId)
+          if (entry === undefined) break
+          entry.buffer.updatedAt = Date.now()
+          if (frame?.type === 'assistant-stream') {
+            applyStreamFrame(entry.buffer, frame.frame)
+          } else if (frame?.type === 'snapshot') {
+            entry.buffer.text = ''
+            entry.buffer.reasoning = ''
+            entry.buffer.tools = []
+            const baseline = frame.assistantStream?.activeAttempt
+            if (baseline !== undefined && Array.isArray(baseline.stream)) {
+              for (const chunk of baseline.stream) applyStreamChunk(entry.buffer, chunk)
+            }
+          }
+        }
+      } catch (error) {
+        const entry = watchers.get(sessionId)
+        if (entry !== undefined && signal.aborted !== true) {
+          entry.buffer.error = error instanceof Error ? error.message : String(error)
+        }
+      }
+    })()
+    if (watcherTimer === null) {
+      watcherTimer = setInterval(() => {
+        const now = Date.now()
+        for (const [sessionId, entry] of watchers) {
+          if (now - entry.lastReadAt > 120_000) stopWatch(sessionId)
+        }
+      }, 30_000)
+      if (typeof watcherTimer.unref === 'function') watcherTimer.unref()
+    }
+    return { ok: true, sessionId }
+  }
+
+  /** 停止监听一个会话。 */
+  function stopWatch(sessionId) {
+    const entry = watchers.get(sessionId)
+    if (entry === undefined) return { ok: true, removed: false }
+    watchers.delete(sessionId)
+    try { entry.abort.abort() } catch { /* 忽略 */ }
+    return { ok: true, removed: true }
+  }
+
+  /** 读一个会话的实时状态与流式文本缓冲。 */
+  async function liveState(sessionId, signal) {
+    const entry = watchers.get(sessionId)
+    const controller = ctx.get('sessionController')
+    let state = null
+    if (controller && typeof controller.state === 'function') {
+      try {
+        state = await controller.state({ sessionId }, signal ?? idleSignal())
+      } catch { /* 保持空 */ }
+    }
+    if (entry === undefined) {
+      return { ok: true, watching: false, running: state?.running === true, active: state?.active === true, pendingInput: state?.pendingInput ?? [] }
+    }
+    entry.lastReadAt = Date.now()
+    return {
+      ok: true,
+      watching: true,
+      running: state?.running === true,
+      active: state?.active === true,
+      pendingInput: state?.pendingInput ?? [],
+      queue: (state?.queue ?? []).length,
+      streamText: entry.buffer.text,
+      streamReasoning: entry.buffer.reasoning,
+      tools: entry.buffer.tools,
+      updatedAt: new Date(entry.buffer.updatedAt).toISOString(),
+      error: entry.buffer.error,
+    }
+  }
+
+  /** 给某个角色发一条普通消息（不记派活台账）。 */
+  async function sendMessage(sessionId, text, mode, signal) {
+    const controller = ctx.get('sessionController')
+    if (!controller || typeof controller.prompt !== 'function') throw new Error('sessionController 不可用')
+    const body = String(text ?? '').trim()
+    if (body === '') throw new Error('消息不能为空')
+    await controller.prompt({
+      requestId: `session-team-msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      sessionId,
+      mode: mode === 'steer' ? 'steer' : 'queue',
+      content: [{ type: 'text', text: body.slice(0, 8000) }],
+    }, signal ?? idleSignal())
+    return { ok: true, sessionId, mode: mode === 'steer' ? 'steer' : 'queue' }
+  }
+
   // ---- 项目分组（workspace） ----
 
   /** 团队 cwd 对应的持久工作区：不存在就建一个，让新会话直接落到项目分组里。 */
@@ -775,6 +919,11 @@ export async function apply(ctx, config) {
       deliveryTimers.clear()
       for (const timer of noticeTimers.values()) clearTimeout(timer)
       noticeTimers.clear()
+      for (const sessionId of [...watchers.keys()]) stopWatch(sessionId)
+      if (watcherTimer !== null) {
+        clearInterval(watcherTimer)
+        watcherTimer = null
+      }
       if (teamsTimer !== null) clearTimeout(teamsTimer)
       if (ledgerTimer !== null) clearTimeout(ledgerTimer)
     },
@@ -1698,6 +1847,7 @@ export async function apply(ctx, config) {
             text: oneLine(notice.text, 300),
           })),
           reports: reports.filter(report => report.teamId === team.id).slice(-50).map(report => ({
+            sessionId: report.sessionId,
             from: report.name,
             role: report.role,
             stage: report.stage,
@@ -1880,6 +2030,44 @@ export async function apply(ctx, config) {
           case 'create-team': {
             const created = await createTeam(body, idleSignal())
             return { ok: true, ...created }
+          }
+          case 'watch': {
+            const sessionId = String(body.sessionId ?? '').trim()
+            if (sessionId === '') throw new Error('缺少 sessionId')
+            return startWatch(sessionId)
+          }
+          case 'unwatch': {
+            return stopWatch(String(body.sessionId ?? '').trim())
+          }
+          case 'message': {
+            const sessionId = String(body.sessionId ?? '').trim()
+            if (sessionId === '') throw new Error('缺少 sessionId')
+            return sendMessage(sessionId, body.text, body.mode, idleSignal())
+          }
+          case 'cancel': {
+            const sessionId = String(body.sessionId ?? '').trim()
+            if (sessionId === '') throw new Error('缺少 sessionId')
+            const controller = ctx.get('sessionController')
+            if (!controller || typeof controller.cancel !== 'function') throw new Error('sessionController.cancel 不可用')
+            await controller.cancel({ sessionId })
+            return { ok: true, sessionId }
+          }
+          case 'rename-session': {
+            const sessionId = String(body.sessionId ?? '').trim()
+            const title = String(body.title ?? '').trim()
+            if (sessionId === '' || title === '') throw new Error('需要 sessionId 和 title')
+            const controller = ctx.get('sessionController')
+            if (!controller || typeof controller.rename !== 'function') throw new Error('sessionController.rename 不可用')
+            const value = await controller.rename({ sessionId, title })
+            return { ok: true, title: value?.title ?? title }
+          }
+          case 'archive-session': {
+            const sessionId = String(body.sessionId ?? '').trim()
+            if (sessionId === '') throw new Error('缺少 sessionId')
+            const registry = ctx.get('workspaceRegistry')
+            if (!registry || typeof registry.archiveSession !== 'function') throw new Error('workspaceRegistry.archiveSession 不可用')
+            await registry.archiveSession(sessionId, { stopActivity: true })
+            return { ok: true, sessionId }
           }
           case 'attach-workspace': {
             const team = targetTeam(body)
@@ -2069,6 +2257,19 @@ export async function apply(ctx, config) {
           return { ok: false, error: error instanceof Error ? error.message : String(error) }
         }
       }, `session-team: GET ${config.routePath}/transcript`)
+
+      route(`${config.routePath}/live`, async (req, signal) => {
+        if (req.method !== 'GET') return { ok: false, error: 'GET only' }
+        const query = typeof req.url === 'string' ? req.url.split('?')[1] ?? '' : ''
+        const params = new URLSearchParams(query)
+        const sessionId = String(params.get('session') ?? '').trim()
+        if (sessionId === '') return { ok: false, error: '缺少 session 参数' }
+        try {
+          return await liveState(sessionId, signal)
+        } catch (error) {
+          return { ok: false, error: error instanceof Error ? error.message : String(error) }
+        }
+      }, `session-team: GET ${config.routePath}/live`)
 
       route(`${config.routePath}/action`, async req => {
         if (req.method !== 'POST') return { ok: false, error: 'POST only' }

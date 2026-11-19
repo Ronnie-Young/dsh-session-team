@@ -36,6 +36,24 @@ window.__ModuleLoader__.load({
       pending: '待读汇报',
       noticesPending: '待通知',
       viewChat: '对话',
+      railTitle: '角色',
+      chatPlaceholder: '给这个角色发消息…（Enter 发送，Shift+Enter 换行）',
+      chatEmpty: '还没有对话内容，给它发第一条消息吧',
+      sendQueue: '发送',
+      sendSteer: '插话发送',
+      interrupt: '中断',
+      liveRunning: '正在生成…',
+      liveTools: '调用工具',
+      reply: '回复',
+      noticeTab: '通知',
+      noNotices: '没有待送达的通知',
+      dispatchAll: '派给全部',
+      dispatchTab: '派活',
+      modeMessage: '消息',
+      sessionRename: '重命名会话',
+      sessionArchive: '归档会话',
+      chatRefresh: '刷新对话',
+      pendingInput: '等待你处理',
       tipBack: '回到团队列表页（不会删除任何数据）',
       tipRefresh: '重新读取成员状态、任务和汇报',
       tipFlush: '把暂存的汇报和成员变动通知立刻投递给 Lead（Lead 正忙时也会排队）',
@@ -177,6 +195,24 @@ window.__ModuleLoader__.load({
       pending: 'Unread reports',
       noticesPending: 'notices pending',
       viewChat: 'Chat',
+      railTitle: 'Roles',
+      chatPlaceholder: 'Message this role… (Enter sends, Shift+Enter newline)',
+      chatEmpty: 'No messages yet — send the first one',
+      sendQueue: 'Send',
+      sendSteer: 'Steer',
+      interrupt: 'Interrupt',
+      liveRunning: 'Generating…',
+      liveTools: 'Tools',
+      reply: 'Reply',
+      noticeTab: 'Notices',
+      noNotices: 'No pending notices',
+      dispatchAll: 'Dispatch to all',
+      dispatchTab: 'Dispatch',
+      modeMessage: 'Message',
+      sessionRename: 'Rename session',
+      sessionArchive: 'Archive session',
+      chatRefresh: 'Refresh chat',
+      pendingInput: 'Waiting for you',
       tipBack: 'Back to the team list; nothing is deleted',
       tipRefresh: 'Re-read member state, tasks and reports',
       tipFlush: 'Deliver queued reports and member-change notices to the Lead now (queued if the Lead is busy)',
@@ -360,6 +396,28 @@ window.__ModuleLoader__.load({
 .stm-tab{border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-secondary);border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer}
 .stm-tab-on{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l2)}
 .stm-more{margin-top:8px}
+.stm-workbench{overflow:hidden!important}
+.stm-workbench .stm-wrap{max-width:none;height:100%;gap:10px}
+.stm-work{display:flex;gap:10px;flex:1;min-height:0}
+.stm-modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:70;background:rgba(0,0,0,.35)}
+.stm-modal-body{width:760px;max-width:94vw;max-height:86vh;overflow:auto;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.stm-rail{width:228px;flex:0 0 228px;min-height:0;display:flex;flex-direction:column;border:1px solid var(--dsw-alias-border-l1);border-radius:12px;background:var(--dsw-alias-bg-layer-1);overflow:hidden}
+.stm-rail-head{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--dsw-alias-border-l1);font-size:12px;color:var(--dsw-alias-label-secondary)}
+.stm-rail-list{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.stm-rail-item{width:100%;text-align:left;border:0;background:transparent;border-bottom:1px solid var(--dsw-alias-border-l1);padding:8px 10px;cursor:pointer;color:var(--dsw-alias-label-primary);display:flex;flex-direction:column;gap:3px}
+.stm-rail-item:hover{background:var(--dsw-alias-bg-layer-2)}
+.stm-rail-item-on{background:var(--dsw-alias-bg-layer-2);box-shadow:inset 2px 0 0 var(--dsw-alias-brand-primary,var(--dsw-alias-label-primary))}
+.stm-rail-name{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;min-width:0}
+.stm-rail-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stm-rail-sub{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dsw-alias-label-secondary);min-width:0}
+.stm-chat{flex:1;min-width:0;display:flex;flex-direction:column;border:1px solid var(--dsw-alias-border-l1);border-radius:12px;background:var(--dsw-alias-bg-layer-1);overflow:hidden}
+.stm-chat-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--dsw-alias-border-l1);flex-wrap:wrap}
+.stm-chat-body{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:10px 14px;display:flex;flex-direction:column;gap:8px}
+.stm-chat-foot{border-top:1px solid var(--dsw-alias-border-l1);padding:8px 12px;display:flex;flex-direction:column;gap:6px}
+.stm-live{border:1px dashed var(--dsw-alias-border-l2);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--dsw-alias-label-secondary);white-space:pre-wrap;max-height:220px;overflow-y:auto}
+.stm-side{width:340px;flex:0 0 340px;min-height:0;display:flex;flex-direction:column;border:1px solid var(--dsw-alias-border-l1);border-radius:12px;background:var(--dsw-alias-bg-layer-1);overflow:hidden}
+.stm-side-tabs{display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid var(--dsw-alias-border-l1);flex-wrap:wrap}
+.stm-side-body{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
 .stm-drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:92vw;background:var(--dsw-alias-bg-layer-1);border-left:1px solid var(--dsw-alias-border-l1);box-shadow:-12px 0 32px rgba(0,0,0,.18);z-index:60;display:flex;flex-direction:column;animation:stm-slide-in .18s ease-out}
 @keyframes stm-slide-in{from{transform:translateX(100%)}to{transform:translateX(0)}}
 .stm-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--dsw-alias-border-l1)}
@@ -462,6 +520,32 @@ window.__ModuleLoader__.load({
 
     function withTeam(state, body) {
       return { ...body, teamId: state?.activeTeamId ?? '' }
+    }
+
+    /** 只发动作、不触发整页状态刷新（用于 watch/unwatch 这类高频调用）。 */
+    async function actRaw(body) {
+      try {
+        const response = await fetch(`${ROUTE}/action`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body)
+        })
+        return await response.json()
+      } catch (error) {
+        return { ok: false, error: String(error) }
+      }
+    }
+
+    /** 读一个会话的实时状态与流式文本。 */
+    async function fetchLive(sessionId) {
+      try {
+        const response = await fetch(`${ROUTE}/live?session=${encodeURIComponent(sessionId)}`, {
+          headers: { accept: 'application/json' }
+        })
+        return await response.json()
+      } catch (error) {
+        return { ok: false, error: String(error) }
+      }
     }
 
     /** 读一个会话最近的对话（只读，不激活 Agent）。 */
@@ -1478,13 +1562,371 @@ window.__ModuleLoader__.load({
       )
     }
 
+    /** 左侧角色栏：一屏看到所有角色状态，点一下切换对话。 */
+    function MemberRail({ state, selectedId, onSelect, onAdd, adding, onNotice }) {
+      const team = state?.team
+      const members = team?.members ?? []
+      return h('div', { className: 'stm-rail' },
+        h('div', { className: 'stm-rail-head' },
+          h('span', null, `${t('railTitle')} ${members.length}`),
+          h(Button, { ghost: true, onClick: onAdd }, adding ? t('cancel') : '＋')
+        ),
+        h('div', { className: 'stm-rail-list' },
+          members.map(member => {
+            const status = statusOf(member)
+            const chips = []
+            if (member.lead) chips.push(t('lead'))
+            if (member.role) chips.push(member.role)
+            chips.push(`${t('stage')} ${member.stage}`)
+            return h('button', {
+              key: member.sessionId,
+              className: `stm-rail-item${member.sessionId === selectedId ? ' stm-rail-item-on' : ''}`,
+              onClick: () => onSelect(member.sessionId)
+            },
+              h('div', { className: 'stm-rail-name' },
+                h('span', { className: `stm-dot stm-dot-${status.kind}` }),
+                h('span', null, member.name),
+                member.unread > 0 ? h('span', { className: 'stm-chip' }, `${member.unread}`) : null
+              ),
+              h('div', { className: 'stm-rail-sub' },
+                h('span', null, status.label),
+                chips.length === 0 ? null : h('span', null, `· ${chips.join(' · ')}`)
+              )
+            )
+          })
+        )
+      )
+    }
+
+    /** 中间对话区：看历史 + 实时流式输出 + 发消息/派活/中断。 */
+    function ConversationPane({ state, sessionId, draft, onDraft, onNotice, openSession }) {
+      const team = state?.team
+      const member = (team?.members ?? []).find(candidate => candidate.sessionId === sessionId) ?? null
+      const [transcript, setTranscript] = useState(null)
+      const [live, setLive] = useState(null)
+      const [error, setError] = useState('')
+      const [loading, setLoading] = useState(false)
+      const [busy, setBusy] = useState('')
+      const [mode, setMode] = useState('message')
+      const [sendMode, setSendMode] = useState('queue')
+      const scrollRef = useRef(null)
+      const runningRef = useRef(false)
+      const lastSeq = transcript?.messages?.length
+        ? transcript.messages[transcript.messages.length - 1].seq
+        : -1
+
+      async function loadTranscript(quiet) {
+        if (sessionId === '') return
+        if (quiet !== true) setLoading(true)
+        try {
+          const payload = await fetchTranscript(sessionId, 40)
+          if (payload.ok === false) {
+            setError(payload.error ?? 'unknown')
+          } else {
+            setError('')
+            setTranscript(payload)
+          }
+        } catch (cause) {
+          setError(String(cause))
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      // 切换角色：换 watch、读历史
+      useEffect(() => {
+        if (sessionId === '') return undefined
+        setTranscript(null)
+        setLive(null)
+        setError('')
+        loadTranscript()
+        actRaw({ kind: 'watch', sessionId })
+        return () => { actRaw({ kind: 'unwatch', sessionId }) }
+      }, [sessionId])
+
+      // 实时轮询：状态 + 流式文本
+      useEffect(() => {
+        if (sessionId === '') return undefined
+        let stopped = false
+        async function tick() {
+          if (stopped) return
+          const payload = await fetchLive(sessionId)
+          if (stopped) return
+          if (payload.ok !== false) {
+            setLive(payload)
+            if (runningRef.current === true && payload.running !== true) loadTranscript(true)
+            runningRef.current = payload.running === true
+          }
+        }
+        tick()
+        const timer = setInterval(tick, 1500)
+        return () => {
+          stopped = true
+          clearInterval(timer)
+        }
+      }, [sessionId])
+
+      useEffect(() => {
+        const element = scrollRef.current
+        if (element !== null && element !== undefined) element.scrollTop = element.scrollHeight
+      }, [lastSeq, live?.streamText?.length])
+
+      async function send(steer, all) {
+        const text = draft.trim()
+        if (text === '') return
+        setBusy(steer ? 'steer' : 'send')
+        let result
+        if (mode === 'dispatch' || all === true) {
+          result = await act(withTeam(state, {
+            kind: 'dispatch',
+            mode: steer ? 'steer' : 'queue',
+            tasks: [{ target: all === true ? 'all' : sessionId, text }]
+          }))
+        } else {
+          result = await actRaw({ kind: 'message', sessionId, text, mode: steer ? 'steer' : 'queue' })
+        }
+        setBusy('')
+        if (result === null || result === undefined || result.ok === false) {
+          onNotice(`${t('failed')}: ${result?.error?.message ?? result?.error ?? 'unknown'}`)
+          return
+        }
+        onDraft('')
+        if (mode === 'dispatch' || all === true) {
+          const failed = (result.results ?? []).filter(item => !item.ok)
+          onNotice(failed.length > 0
+            ? `${t('failed')}: ${failed.map(item => `${item.name} ${item.error}`).join('; ')}`
+            : `${t('done')}: ${(result.results ?? []).map(item => item.name).join(', ')}`)
+        }
+        loadTranscript(true)
+      }
+
+      async function interrupt() {
+        setBusy('cancel')
+        const result = await act({ kind: 'cancel', sessionId })
+        setBusy('')
+        if (result.ok === false) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+        else {
+          onNotice(t('done'))
+          loadTranscript(true)
+        }
+      }
+
+      if (member === null) {
+        return h('div', { className: 'stm-chat' }, h('div', { className: 'stm-empty' }, t('chatEmpty')))
+      }
+
+      const running = live?.running === true || member.running === true
+      const status = statusOf(member)
+      const chips = []
+      if (member.lead) chips.push(t('lead'))
+      if (member.role) chips.push(member.role)
+      chips.push(`${t('stage')} ${member.stage}`)
+      if (member.model !== null && member.model !== undefined) chips.push(`${member.model.model}${member.model.reasoningEffort ? ` · ${member.model.reasoningEffort}` : ''}`)
+
+      return h('div', { className: 'stm-chat' },
+        h('div', { className: 'stm-chat-head' },
+          h('div', { className: 'stm-inline', style: { gap: '8px', flexWrap: 'wrap' } },
+            h('span', { className: `stm-dot stm-dot-${status.kind}` }),
+            h('strong', null, member.name),
+            chips.map(chip => h('span', { className: 'stm-chip', key: chip }, chip)),
+            live?.pendingInput !== undefined && live.pendingInput.length > 0
+              ? h('span', { className: 'stm-chip stm-chip-warn' }, t('pendingInput'))
+              : null
+          ),
+          h('div', { className: 'stm-inline' },
+            h(Button, { ghost: true, onClick: () => loadTranscript() }, t('chatRefresh')),
+            h(Button, { ghost: true, onClick: async () => {
+              const title = typeof window.prompt === 'function' ? window.prompt(t('sessionRename'), member.name) : ''
+              if (typeof title !== 'string' || title.trim() === '') return
+              const result = await act({ kind: 'rename-session', sessionId, title: title.trim() })
+              if (result.ok === false) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+            } }, t('sessionRename')),
+            h(Button, { ghost: true, onClick: async () => {
+              if (typeof window.confirm === 'function' && !window.confirm(t('sessionArchive'))) return
+              const result = await act({ kind: 'archive-session', sessionId })
+              if (result.ok === false) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+              else onNotice(`${t('done')}: ${t('sessionArchive')}`)
+            } }, t('sessionArchive')),
+            h(Button, { ghost: true, onClick: () => { if (openSession) openSession(sessionId) } }, t('drawerOpenChat'))
+          )
+        ),
+        h('div', { className: 'stm-chat-body', ref: scrollRef },
+          error === '' ? null : h('div', { className: 'stm-notice stm-notice-error' }, `${t('failed')}: ${error}`),
+          transcript === null
+            ? h('div', { className: 'stm-empty' }, loading ? t('drawerLoading') : t('chatEmpty'))
+            : transcript.messages.length === 0
+              ? h('div', { className: 'stm-empty' }, t('chatEmpty'))
+              : transcript.messages.map(message => h('div', { key: message.seq, className: `stm-msg stm-msg-${message.role}` },
+                h('div', { className: 'stm-msg-role' },
+                  `${message.role === 'user' ? t('user') : message.role === 'assistant' ? 'Assistant' : 'Tool'}`,
+                  message.time > 0 ? ` · ${new Date(message.time).toLocaleTimeString('zh-CN', { hour12: false })}` : ''),
+                h('div', { className: 'stm-msg-text' }, message.text),
+                message.tools !== undefined && message.tools.length > 0
+                  ? h('div', { className: 'stm-msg-tools' }, `${t('tools')}: ${message.tools.join(', ')}`)
+                  : null
+              )),
+          running
+            ? h('div', { className: 'stm-live' },
+              h('div', { className: 'stm-msg-role' }, t('liveRunning')),
+              h('div', null, live?.streamText === undefined || live?.streamText === '' ? '…' : live.streamText),
+              live?.tools !== undefined && live.tools.length > 0
+                ? h('div', { className: 'stm-msg-tools' }, `${t('liveTools')}: ${live.tools.join(', ')}`)
+                : null
+            )
+            : null
+        ),
+        h('div', { className: 'stm-chat-foot' },
+          h('textarea', {
+            className: 'stm-textarea',
+            value: draft,
+            placeholder: t('chatPlaceholder'),
+            onChange: event => onDraft(event.target.value),
+            onKeyDown: event => {
+              if (event.key === 'Enter' && event.shiftKey !== true) {
+                event.preventDefault()
+                send(event.ctrlKey === true)
+              }
+            }
+          }),
+          h('div', { className: 'stm-inline', style: { justifyContent: 'space-between', flexWrap: 'wrap' } },
+            h('div', { className: 'stm-inline' },
+              h('select', { className: 'stm-select', value: mode, style: { width: '110px' },
+                onChange: event => setMode(event.target.value) },
+                h('option', { value: 'message', key: 'message' }, t('modeMessage')),
+                h('option', { value: 'dispatch', key: 'dispatch' }, t('dispatchTab'))
+              ),
+              running
+                ? h(Button, { ghost: true, onClick: () => send(true), disabled: busy !== '' }, t('sendSteer'))
+                : null
+            ),
+            h('div', { className: 'stm-inline' },
+              running ? h(Button, { ghost: true, onClick: interrupt, disabled: busy !== '' }, busy === 'cancel' ? '…' : t('interrupt')) : null,
+              h(Button, { ghost: true, onClick: () => send(false, true), disabled: busy !== '' || draft.trim() === '' }, t('dispatchAll')),
+              h(Button, { primary: true, onClick: () => send(false), disabled: busy !== '' || draft.trim() === '' }, busy === 'send' ? '…' : t('sendQueue'))
+            )
+          )
+        )
+      )
+    }
+
+    /** 右侧工作区：任务 / 汇报 / 通知 / 派活。 */
+    function SidePanel({ state, onNotice, onReply }) {
+      const team = state?.team ?? {}
+      const tasks = team.tasks ?? []
+      const reports = team.reports ?? []
+      const notices = team.notices ?? []
+      const [tab, setTab] = useState('tasks')
+      const [expanded, setExpanded] = useState(() => new Set())
+      const [busy, setBusy] = useState('')
+
+      const openTasks = tasks.filter(task => task.state === 'dispatched' || task.state === 'paused')
+      const unread = reports.filter(report => !report.delivered)
+
+      async function recover(task) {
+        setBusy(task.id)
+        const result = await act(withTeam(state, { kind: 'recover', sessionId: task.sessionId }))
+        setBusy('')
+        if (result.ok === false) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+        else onNotice(t('done'))
+      }
+
+      return h('div', { className: 'stm-side' },
+        h('div', { className: 'stm-side-tabs' },
+          h('button', { className: `stm-tab${tab === 'tasks' ? ' stm-tab-on' : ''}`, onClick: () => setTab('tasks') }, `${t('tasks')} ${openTasks.length}`),
+          h('button', { className: `stm-tab${tab === 'reports' ? ' stm-tab-on' : ''}`, onClick: () => setTab('reports') }, `${t('reports')} ${unread.length}`),
+          h('button', { className: `stm-tab${tab === 'notices' ? ' stm-tab-on' : ''}`, onClick: () => setTab('notices') }, `${t('noticeTab')} ${notices.filter(item => !item.delivered).length}`),
+          h('button', { className: `stm-tab${tab === 'dispatch' ? ' stm-tab-on' : ''}`, onClick: () => setTab('dispatch') }, t('dispatchTab'))
+        ),
+        h('div', { className: 'stm-side-body' },
+          tab === 'tasks'
+            ? (openTasks.length === 0
+              ? h('div', { className: 'stm-empty' }, t('noOpenTasks'))
+              : openTasks.slice().reverse().slice(0, 12).map(task => {
+                const status = taskStateOf(task)
+                return h('div', { className: 'stm-report', key: task.id },
+                  h('div', { className: 'stm-report-head' },
+                    h('span', { className: 'stm-report-subject' }, task.subject),
+                    h('span', { className: `stm-chip${status.kind === 'stale' ? ' stm-chip-warn' : ''}` }, status.label),
+                    h('span', null, task.name)
+                  ),
+                  h('div', { className: 'stm-inline', style: { marginTop: '4px' } },
+                    task.stale === true
+                      ? h(Button, { ghost: true, onClick: () => recover(task), disabled: busy === task.id }, busy === task.id ? '…' : t('recover'))
+                      : h(Button, { ghost: true, onClick: () => onReply(task.sessionId, task.subject) }, t('reply'))
+                  )
+                )
+              }))
+            : tab === 'reports'
+              ? (unread.length === 0
+                ? h('div', { className: 'stm-empty' }, t('noUnreadReports'))
+                : unread.slice().reverse().slice(0, 12).map((report, index) => {
+                  const key = `${report.createdAt}-${index}`
+                  const isOpen = expanded.has(key)
+                  return h('div', { className: 'stm-report', key },
+                    h('div', { className: 'stm-report-head' },
+                      h('span', { className: 'stm-report-subject' }, report.subject),
+                      h('span', { className: 'stm-chip' }, report.state),
+                      h('span', null, `${report.from}${report.role ? `（${report.role}）` : ''}`)
+                    ),
+                    h('div', {
+                      className: `stm-report-body${isOpen ? '' : ' stm-report-body-clamp'}`,
+                      style: { cursor: 'pointer' },
+                      onClick: () => setExpanded(previous => {
+                        const next = new Set(previous)
+                        if (next.has(key)) next.delete(key)
+                        else next.add(key)
+                        return next
+                      })
+                    }, report.body),
+                    report.sessionId !== undefined && report.sessionId !== ''
+                      ? h(Button, { ghost: true, onClick: () => onReply(report.sessionId, report.subject) }, t('reply'))
+                      : null
+                  )
+                }))
+              : tab === 'notices'
+                ? (notices.length === 0
+                  ? h('div', { className: 'stm-empty' }, t('noNotices'))
+                  : notices.slice().reverse().slice(0, 10).map((notice, index) => h('div', { className: 'stm-report', key: index },
+                    h('div', { className: 'stm-report-head' },
+                      h('span', { className: 'stm-report-subject' }, notice.delivered ? t('delivered') : t('queued')),
+                      h('span', null, notice.createdAt === undefined ? '' : new Date(notice.createdAt).toLocaleTimeString('zh-CN', { hour12: false }))
+                    ),
+                    h('div', { className: 'stm-report-body' }, notice.text)
+                  )))
+                : h(DispatchBox, { state, onNotice })
+        )
+      )
+    }
+
     function TeamDetail({ state, onBack, onNotice }) {
       const [addOpen, setAddOpen] = useState(false)
       const [agentOpen, setAgentOpen] = useState(false)
-      const [dragFrom, setDragFrom] = useState(-1)
-      const [drawerId, setDrawerId] = useState('')
       const [busy, setBusy] = useState(false)
+      const [draft, setDraft] = useState('')
+      const [selectedId, setSelectedId] = useState('')
       const team = state?.team
+
+      const effectiveId = team === undefined || team === null
+        ? ''
+        : team.members.some(member => member.sessionId === selectedId)
+          ? selectedId
+          : (team.lead !== '' ? team.lead : (team.members[0]?.sessionId ?? ''))
+
+      useEffect(() => {
+        if (team === undefined || team === null) return
+        try {
+          const stored = window.localStorage.getItem(`session-team:role:${team.id}`)
+          if (stored !== null && stored !== '' && team.members.some(member => member.sessionId === stored)) {
+            setSelectedId(stored)
+          }
+        } catch { /* 忽略 */ }
+      }, [team?.id])
+
+      useEffect(() => {
+        if (team === undefined || team === null || effectiveId === '') return
+        try { window.localStorage.setItem(`session-team:role:${team.id}`, effectiveId) } catch { /* 忽略 */ }
+      }, [effectiveId])
+
       if (!team) {
         return h('div', { className: 'stm-page' },
           h('div', { className: 'stm-wrap' },
@@ -1493,19 +1935,8 @@ window.__ModuleLoader__.load({
           )
         )
       }
-      const leadMember = team.members.find(member => member.lead)
 
-      function moveMember(from, to) {
-        if (from < 0 || to < 0 || from === to) return
-        const ids = team.members.map(member => member.sessionId)
-        if (from >= ids.length || to >= ids.length) return
-        const [moved] = ids.splice(from, 1)
-        ids.splice(to, 0, moved)
-        act(withTeam(state, { kind: 'reorder-members', order: ids })).then(result => {
-          if (!result.ok) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
-        })
-        setDragFrom(-1)
-      }
+      const leadMember = team.members.find(member => member.lead)
 
       function run(body, success) {
         setBusy(true)
@@ -1516,7 +1947,7 @@ window.__ModuleLoader__.load({
         })
       }
 
-      return h('div', { className: 'stm-page' },
+      return h('div', { className: 'stm-page stm-workbench' },
         h('div', { className: 'stm-wrap' },
           h('div', { className: 'stm-head' },
             h('div', null,
@@ -1576,50 +2007,53 @@ window.__ModuleLoader__.load({
               }, t('deleteTeam'))
             )
           ),
-          addOpen ? h(AddMembers, { state, onNotice }) : null,
-          h('div', { className: 'stm-card' },
-            h('h3', { className: 'stm-section-title' }, t('members')),
-            team.members.length === 0
-              ? h('div', { className: 'stm-empty' }, t('noTeams'))
-              : team.members.map((member, index) => h(MemberRow, {
-                key: member.sessionId,
-                member,
-                models: state?.models,
-                state,
-                onNotice,
-                index,
-                isFirst: index === 0,
-                isLast: index === team.members.length - 1,
-                onMove: delta => moveMember(index, index + delta),
-                onDragStart: () => setDragFrom(index),
-                onDragOver: event => { event.preventDefault() },
-                onDrop: () => moveMember(dragFrom, index),
-                onDragEnd: () => setDragFrom(-1),
-                dragging: dragFrom === index,
-                onViewChat: id => setDrawerId(id)
-              })),
-            agentOpen
-              ? h(AddAgentRows, {
-                state,
-                onNotice,
-                onDone: () => setAgentOpen(false)
-              })
-              : h('div', { className: 'stm-inline', style: { marginTop: '10px' } },
-                h(Button, { ghost: true, onClick: () => setAgentOpen(true) }, t('addAgentEntry'))
-              )
-          ),
-          team.members.length > 0 ? h(DispatchBox, { state, onNotice }) : null,
-          h(TaskCard, { state, onNotice }),
-          h(ReportList, { state }),
-          drawerId === ''
-            ? null
-            : h(TranscriptDrawer, {
+          h('div', { className: 'stm-work' },
+            h(MemberRail, {
               state,
-              sessionId: drawerId,
-              onClose: () => setDrawerId(''),
-              onSelect: id => setDrawerId(id)
+              selectedId: effectiveId,
+              onSelect: id => setSelectedId(id),
+              onAdd: () => setAgentOpen(!agentOpen),
+              adding: agentOpen
             }),
-          h('div', { className: 'stm-hint' }, `dsh-session-team v${state?.version ?? '?'}`)
+            h(ConversationPane, {
+              state,
+              sessionId: effectiveId,
+              draft,
+              onDraft: setDraft,
+              onNotice,
+              openSession
+            }),
+            h(SidePanel, {
+              state,
+              onNotice,
+              onReply: (id, subject) => {
+                setSelectedId(id)
+                setDraft(`关于「${subject}」：`)
+              }
+            })
+          ),
+          agentOpen
+            ? h('div', { className: 'stm-modal' },
+              h('div', { className: 'stm-modal-body' },
+                h('div', { className: 'stm-inline', style: { justifyContent: 'space-between' } },
+                  h('h3', { className: 'stm-section-title', style: { margin: 0 } }, t('addAgentTitle')),
+                  h(Button, { ghost: true, onClick: () => setAgentOpen(false) }, t('cancel'))
+                ),
+                h(AddAgentRows, { state, onNotice, onDone: () => setAgentOpen(false) })
+              )
+            )
+            : null,
+          addOpen
+            ? h('div', { className: 'stm-modal' },
+              h('div', { className: 'stm-modal-body' },
+                h('div', { className: 'stm-inline', style: { justifyContent: 'space-between' } },
+                  h('h3', { className: 'stm-section-title', style: { margin: 0 } }, t('addMember')),
+                  h(Button, { ghost: true, onClick: () => setAddOpen(false) }, t('cancel'))
+                ),
+                h(AddMembers, { state, onNotice })
+              )
+            )
+            : null
         )
       )
     }

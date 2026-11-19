@@ -22,6 +22,7 @@ async function harness(configInput, options = {}) {
   let savedConfig = null
 
   const selections = new Map()
+  const cancels = []
   const createdRequests = []
   let createdSessions = 0
   const presetList = [
@@ -88,6 +89,41 @@ async function harness(configInput, options = {}) {
     async prompt(request) {
       prompts.push(request)
       return { accepted: true }
+    },
+    async cancel(request) {
+      cancels.push(request)
+      return { accepted: true }
+    },
+    follow(_request, signal) {
+      return (async function* generate() {
+        yield {
+          type: 'snapshot',
+          header: { id: 'x' },
+          cursor: 0,
+          records: [],
+          hasMore: false,
+          projections: { asOfSeq: 0, values: {} },
+          assistantStream: {
+            revision: 1,
+            activeAttempt: {
+              attemptId: 'a1',
+              startedAfterSeq: 0,
+              turn: 1,
+              step: 1,
+              nextIndex: 0,
+              stream: [{ type: 'text-delta', index: 0, text: '流式片段' }]
+            }
+          }
+        }
+        yield { type: 'assistant-stream', frame: { type: 'start', attemptId: 'a2', revision: 1, startedAfterSeq: 0, turn: 1, step: 1 } }
+        yield { type: 'assistant-stream', frame: { type: 'chunk', attemptId: 'a2', revision: 1, index: 0, time: 1, chunk: { type: 'text-delta', index: 0, text: '输出中' } } }
+        yield { type: 'assistant-stream', frame: { type: 'chunk', attemptId: 'a2', revision: 1, index: 1, time: 2, chunk: { type: 'tool-call-delta', index: 1, id: 'c9', name: 'read', argumentsDelta: '{}' } } }
+        await new Promise(resolve => {
+          if (signal.aborted) { resolve(); return }
+          signal.addEventListener('abort', resolve)
+          setTimeout(resolve, 200)
+        })
+      })()
     },
     async events() {
       return {
@@ -237,6 +273,7 @@ async function harness(configInput, options = {}) {
     ledgerFile: join(stateDir, 'ledger.json'),
     registrations,
     selections,
+    cancels,
     workspaces,
     createdRequests,
     prompts,
@@ -823,6 +860,39 @@ test('派活可以把 Lead 作为目标', async () => {
   const prompt = h.prompts.at(-1)
   assert.equal(prompt.sessionId, 'session-lead')
   assert.match(prompt.content[0].text, /汇总进度/)
+})
+
+test('给角色发消息 / 中断 / 订阅流式输出', async () => {
+  const h = await harness(TEAM)
+  const sent = await h.callRoute('/session-team/action', {
+    method: 'POST',
+    body: { kind: 'message', sessionId: 'session-a', text: '看一下登录页', mode: 'steer' },
+  })
+  assert.equal(sent.ok, true)
+  const prompt = h.prompts.at(-1)
+  assert.equal(prompt.sessionId, 'session-a')
+  assert.equal(prompt.mode, 'steer')
+  assert.match(prompt.content[0].text, /登录页/)
+
+  const cancelled = await h.callRoute('/session-team/action', {
+    method: 'POST',
+    body: { kind: 'cancel', sessionId: 'session-a' },
+  })
+  assert.equal(cancelled.ok, true)
+  assert.equal(h.cancels.length, 1)
+  assert.equal(h.cancels[0].sessionId, 'session-a')
+
+  await h.callRoute('/session-team/action', { method: 'POST', body: { kind: 'watch', sessionId: 'session-a' } })
+  await new Promise(resolve => setTimeout(resolve, 30))
+  const live = await h.callRoute('/session-team/live?session=session-a')
+  assert.equal(live.ok, true)
+  assert.equal(live.watching, true)
+  assert.match(live.streamText, /输出中/)
+  assert.deepEqual(live.tools, ['read'])
+
+  await h.callRoute('/session-team/action', { method: 'POST', body: { kind: 'unwatch', sessionId: 'session-a' } })
+  const after = await h.callRoute('/session-team/live?session=session-a')
+  assert.equal(after.watching, false)
 })
 
 test('未知操作返回错误而不是抛出面板路由', async () => {

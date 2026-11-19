@@ -18,6 +18,9 @@
 - **一个 Lead**：只有该团队的 Lead 能看到 `team_roster`、`team_dispatch`、`team_collect`、
   `team_models`、`team_recover`；普通成员只看到 `team_report`。工具按**调用者所在的团队**工作，
   不同团队互相隔离。
+- **项目工作台（0.1.0）**：团队详情改为三栏——角色栏 / 对话区 / 工作区；对话区通过 `sessionController.follow`
+  （`assistantStream: true`）订阅实时流式输出并在 `GET /session-team/live` 暴露缓冲、通过 `POST action kind=message`
+  发普通消息（queue/steer）、`kind=cancel` 中断；工作区按「任务 / 汇报 / 通知 / 派活」分栏，任务可恢复、汇报可直接回复上报成员；
 - **角色对话抽屉**：`GET /session-team/transcript?session=&limit=` 只读读取最近消息（`sessionController.events`），
   精简为 user / assistant / tool 三类，客户端抽屉从右向左滑出，可切换角色、静默轮询刷新；
 - **项目分组**：创建会话时传入该团队目录对应的 `workspaceId`，并把会话 `attachSession` 到该项目；
@@ -76,4 +79,4 @@
 
 ## 版本号
 
-当前 `0.0.3`。版本号由用户决定：**未经用户明确同意不要改动**。
+当前 `0.1.0`。版本号由用户决定：**未经用户明确同意不要改动**。
