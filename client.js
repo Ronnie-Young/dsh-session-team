@@ -1746,7 +1746,7 @@ window.__ModuleLoader__.load({
                   event.stopPropagation()
                   if (typeof onSettings === 'function') onSettings(member.sessionId)
                 }
-              }, '⚙️')
+              }, '⚙')
             )
           })
         )
