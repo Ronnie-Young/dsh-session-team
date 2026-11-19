@@ -31,11 +31,24 @@ window.__ModuleLoader__.load({
       openTeam: '打开',
       back: '返回团队列表',
       refresh: '刷新',
-      flush: '立即投递',
-      briefing: '生成 Lead 说明',
+      flush: '投递汇报',
+      briefing: 'Lead 团队说明',
       pending: '待读汇报',
       noticesPending: '待通知',
       viewChat: '对话',
+      tipBack: '回到团队列表页（不会删除任何数据）',
+      tipRefresh: '重新读取成员状态、任务和汇报',
+      tipFlush: '把暂存的汇报和成员变动通知立刻投递给 Lead（Lead 正忙时也会排队）',
+      tipBrief: '给 Lead 发一条团队说明（成员、角色、优先级、当前任务），让它快速进入状态',
+      tipGroup: '把这个团队的会话挂到当前目录对应的项目分组，侧边栏就不会再显示「未分组」',
+      tipAdd: '从侧栏已有会话里挑人加入团队，不会新建会话',
+      tipDelete: '删除这条团队登记；会话本身和它们的聊天记录都会保留',
+      tipMembers: '团队成员数量（含 Lead）',
+      tipOpenTasks: '还没收到 done/blocked 汇报的派活数量',
+      tipPending: '已收到、但还没送达 Lead 的汇报数量',
+      tipNotices: '还没送达 Lead 的成员变动通知数量',
+      tipLead: '团队协调角色：汇总汇报、派活都由它承接',
+      tipDefault: '新建会话默认使用的模型',
       user: '用户',
       tools: '工具',
       drawerTitle: '角色对话',
@@ -49,7 +62,7 @@ window.__ModuleLoader__.load({
       drawerOpenChat: '打开正式会话',
       drawerRefresh: '刷新',
       leadTarget: 'Lead（管理）',
-      groupWorkspace: '归入项目分组',
+      groupWorkspace: '会话归入分组',
       groupedDone: '已归入项目分组：{n} 个会话',
       groupedNone: '会话已经在项目分组里了',
       tabOpen: '未完成',
@@ -62,7 +75,7 @@ window.__ModuleLoader__.load({
       expand: '展开',
       collapseBody: '收起',
       openTasks: '未完成任务',
-      addMember: '从已有会话加入',
+      addMember: '加入已有会话',
       cancel: '收起',
       search: '搜索标题 / 目录 / session id',
       addSelected: '加入团队',
@@ -159,11 +172,24 @@ window.__ModuleLoader__.load({
       openTeam: 'Open',
       back: 'Back to teams',
       refresh: 'Refresh',
-      flush: 'Deliver now',
-      briefing: 'Brief the Lead',
+      flush: 'Deliver reports',
+      briefing: 'Lead team brief',
       pending: 'Unread reports',
       noticesPending: 'notices pending',
       viewChat: 'Chat',
+      tipBack: 'Back to the team list; nothing is deleted',
+      tipRefresh: 'Re-read member state, tasks and reports',
+      tipFlush: 'Deliver queued reports and member-change notices to the Lead now (queued if the Lead is busy)',
+      tipBrief: 'Send the Lead a team brief (members, roles, priorities, open tasks)',
+      tipGroup: 'Attach this team sessions to the project workspace so the sidebar stops showing "Ungrouped"',
+      tipAdd: 'Pick existing sessions to join the team; creates nothing',
+      tipDelete: 'Remove this team registration; sessions and their history are kept',
+      tipMembers: 'Member count including the Lead',
+      tipOpenTasks: 'Tasks without a done/blocked report yet',
+      tipPending: 'Reports received but not yet delivered to the Lead',
+      tipNotices: 'Member-change notices not yet delivered to the Lead',
+      tipLead: 'Coordinator: collects reports and dispatches work',
+      tipDefault: 'Default model for new sessions',
       user: 'User',
       tools: 'Tools',
       drawerTitle: 'Role conversation',
@@ -1496,17 +1522,27 @@ window.__ModuleLoader__.load({
             h('div', null,
               h('h1', { className: 'stm-title' }, team.name),
               h('p', { className: 'stm-sub' },
-                `${t('members')} ${team.members.length} · ${t('pending')} ${team.pendingReports}`,
-                team.pendingNotices > 0 ? ` · ${t('noticesPending')} ${team.pendingNotices}` : '',
-                leadMember ? ` · ${t('lead')}: ${leadMember.name}` : '',
-                state?.models?.default ? ` · ${t('defaultModel', { name: state.models.default.model })}` : ''
+                h('span', { title: t('tipMembers') }, `${t('members')} ${team.members.length}`),
+                ' · ',
+                h('span', { title: t('tipOpenTasks') }, `${t('openTasks')} ${team.openTasks}`),
+                ' · ',
+                h('span', { title: t('tipPending') }, `${t('pending')} ${team.pendingReports}`),
+                team.pendingNotices > 0
+                  ? h('span', { title: t('tipNotices') }, ` · ${t('noticesPending')} ${team.pendingNotices}`)
+                  : null,
+                leadMember
+                  ? h('span', { title: t('tipLead') }, ` · ${t('lead')}: ${leadMember.name}`)
+                  : null,
+                state?.models?.default
+                  ? h('span', { title: t('tipDefault') }, ` · ${t('defaultModel', { name: state.models.default.model })}`)
+                  : null
               )
             ),
             h('div', { className: 'stm-actions' },
-              h(Button, { onClick: onBack }, t('back')),
-              h(Button, { onClick: () => refresh(), disabled: false }, t('refresh')),
-              h(Button, { onClick: () => run({ kind: 'flush' }, `${t('done')}: ${t('flush')}`), disabled: busy || !team.lead }, t('flush')),
-              h(Button, { onClick: () => run({ kind: 'brief-lead' }, `${t('done')}: ${t('briefing')}`), disabled: busy || !team.lead }, t('briefing')),
+              h(Button, { onClick: onBack, title: t('tipBack') }, t('back')),
+              h(Button, { onClick: () => refresh(), disabled: false, title: t('tipRefresh') }, t('refresh')),
+              h(Button, { onClick: () => run({ kind: 'flush' }, `${t('done')}: ${t('flush')}`), disabled: busy || !team.lead, title: t('tipFlush') }, t('flush')),
+              h(Button, { onClick: () => run({ kind: 'brief-lead' }, `${t('done')}: ${t('briefing')}`), disabled: busy || !team.lead, title: t('tipBrief') }, t('briefing')),
               h(Button, {
                 onClick: () => {
                   setBusy(true)
@@ -1521,9 +1557,10 @@ window.__ModuleLoader__.load({
                       : t('groupedNone'))
                   })
                 },
-                disabled: busy
+                disabled: busy,
+                title: t('tipGroup')
               }, t('groupWorkspace')),
-              h(Button, { onClick: () => setAddOpen(!addOpen) }, addOpen ? t('cancel') : t('addMember')),
+              h(Button, { onClick: () => setAddOpen(!addOpen), title: t('tipAdd') }, addOpen ? t('cancel') : t('addMember')),
               h(Button, {
                 onClick: () => {
                   if (typeof window.confirm === 'function' && !window.confirm(t('deleteConfirm'))) return
@@ -1534,7 +1571,8 @@ window.__ModuleLoader__.load({
                     else onBack()
                   })
                 },
-                disabled: busy
+                disabled: busy,
+                title: t('tipDelete')
               }, t('deleteTeam'))
             )
           ),
