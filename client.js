@@ -34,6 +34,7 @@ window.__ModuleLoader__.load({
       flush: '立即投递',
       briefing: '生成 Lead 说明',
       pending: '待读汇报',
+      noticesPending: '待通知',
       openTasks: '未完成任务',
       addMember: '从已有会话加入',
       cancel: '收起',
@@ -135,6 +136,7 @@ window.__ModuleLoader__.load({
       flush: 'Deliver now',
       briefing: 'Brief the Lead',
       pending: 'Unread reports',
+      noticesPending: 'notices pending',
       openTasks: 'Open tasks',
       addMember: 'Add existing sessions',
       cancel: 'Close',
@@ -1193,6 +1195,7 @@ window.__ModuleLoader__.load({
               h('h1', { className: 'stm-title' }, team.name),
               h('p', { className: 'stm-sub' },
                 `${t('members')} ${team.members.length} · ${t('pending')} ${team.pendingReports}`,
+                team.pendingNotices > 0 ? ` · ${t('noticesPending')} ${team.pendingNotices}` : '',
                 leadMember ? ` · ${t('lead')}: ${leadMember.name}` : '',
                 state?.models?.default ? ` · ${t('defaultModel', { name: state.models.default.model })}` : ''
               )

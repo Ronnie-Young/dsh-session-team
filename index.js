@@ -47,6 +47,7 @@ export const inject = []
 const MAX_REPORTS = 200
 /** 台账里保留的派活条数。 */
 const MAX_ASSIGNMENTS = 100
+const MAX_NOTICES = 50
 
 /** 插件配置。 */
 export const Config = Schema.object({
@@ -145,13 +146,17 @@ export async function apply(ctx, config) {
   /** 未送达/未读的汇报与派活台账，都带 teamId。 */
   const reports = []
   const assignments = []
+  const notices = []
   let reportSeq = 0
   let taskSeq = 0
+  let noticeSeq = 0
   let ledgerChain = Promise.resolve()
   let ledgerTimer = null
   /** 每个团队一个投递防抖定时器。 */
   const deliveryTimers = new Map()
+  const noticeTimers = new Map()
   let delivering = false
+  let noticeDelivering = false
   /** 已附带过身份说明的成员。 */
   const briefed = new Set()
 
@@ -262,11 +267,20 @@ export async function apply(ctx, config) {
         taskSeq = Math.max(taskSeq, Number(task.seq) || 0)
       }
     }
+    if (Array.isArray(data.notices)) {
+      for (const notice of data.notices) {
+        if (notice === null || typeof notice !== 'object' || typeof notice.text !== 'string') continue
+        if (typeof notice.teamId !== 'string') notice.teamId = ''
+        if (notices.length < MAX_NOTICES) notices.push(notice)
+        noticeSeq = Math.max(noticeSeq, Number(notice.seq) || 0)
+      }
+    }
     // 旧版台账没有 teamId：只有一个团队时整体归给它。
     if (teams.length === 1) {
       const onlyTeamId = teams[0].id
       for (const report of reports) if (report.teamId === '') report.teamId = onlyTeamId
       for (const task of assignments) if (task.teamId === '') task.teamId = onlyTeamId
+      for (const notice of notices) if (notice.teamId === '') notice.teamId = onlyTeamId
     }
   }
 
@@ -277,6 +291,7 @@ export async function apply(ctx, config) {
       savedAt: new Date().toISOString(),
       assignments: assignments.slice(-MAX_ASSIGNMENTS),
       reports: [...reports.filter(report => !report.delivered), ...reports.filter(report => report.delivered).slice(-50)],
+      notices: [...notices.filter(notice => !notice.delivered), ...notices.filter(notice => notice.delivered).slice(-20)],
     }, null, 2)
     ledgerChain = ledgerChain
       .then(async () => {
@@ -554,6 +569,84 @@ export async function apply(ctx, config) {
     deliveryTimers.set(team.id, timer)
   }
 
+  // ---- 成员变动通知 ----
+
+  /** 当前团队里未送达的成员变动通知。 */
+  const pendingNoticesOf = team => notices.filter(notice => !notice.delivered && notice.teamId === team.id)
+
+  /** 生成一条「成员名单」通知文本；highlight 里的会话会被标记为新成员。 */
+  function formatRosterNotice(team, headline, highlight = []) {
+    const marks = new Set(highlight.filter(id => typeof id === 'string'))
+    const lines = [
+      `[团队成员变动] ${headline}`,
+      `团队「${team.name}」现在有 ${team.members.length} 位成员：`,
+    ]
+    for (const member of team.members) {
+      const tags = []
+      if (marks.has(member.sessionId)) tags.push('新成员')
+      if (member.sessionId === team.lead) tags.push('Lead')
+      const role = member.role === '' ? '' : `（${member.role}）`
+      lines.push(`- ${member.name}${role} · 优先级 ${member.stage}${tags.length === 0 ? '' : ` · ${tags.join(' / ')}`}`)
+    }
+    lines.push('（这是成员名单变更通知，不需要回复。核对或查看完整名单用 team_roster；'
+      + '给新成员安排工作用 team_dispatch，target 写成员名。角色说明见上面的括号。）')
+    return lines.join('\n')
+  }
+
+  /** 记一条成员变动通知并调度投递。 */
+  function queueRosterNotice(team, headline, highlight = []) {
+    if (team === null || team.lead === '') return
+    notices.push({
+      seq: ++noticeSeq,
+      teamId: team.id,
+      text: formatRosterNotice(team, headline, highlight),
+      createdAt: Date.now(),
+      delivered: false,
+    })
+    if (notices.length > MAX_NOTICES) notices.splice(0, notices.length - MAX_NOTICES)
+    scheduleLedgerSave()
+    scheduleNoticeDelivery(team, false)
+  }
+
+  /** 把某个团队未送达的成员变动通知合并成一条发给 Lead。 */
+  async function flushNotices(team, force) {
+    if (noticeDelivering) return { delivered: 0, reason: 'busy' }
+    if (team === null || team.lead === '') return { delivered: 0, reason: 'no-lead' }
+    const pending = pendingNoticesOf(team)
+    if (pending.length === 0) return { delivered: 0, reason: 'empty' }
+    if (!force && !(await leadIsIdle(team))) return { delivered: 0, reason: 'lead-busy' }
+    noticeDelivering = true
+    try {
+      const text = pending.map(notice => notice.text).join('\n\n')
+      await promptSession(team.lead, text, 'queue')
+      const deliveredAt = Date.now()
+      for (const notice of pending) {
+        notice.delivered = true
+        notice.deliveredAt = deliveredAt
+      }
+      scheduleLedgerSave()
+      return { delivered: pending.length, reason: 'ok' }
+    } catch (error) {
+      return { delivered: 0, reason: 'failed', error: error instanceof Error ? error.message : String(error) }
+    } finally {
+      noticeDelivering = false
+    }
+  }
+
+  /** 防抖调度某个团队的成员变动通知投递。 */
+  function scheduleNoticeDelivery(team, force) {
+    if (team === null || team.lead === '') return
+    if (noticeTimers.has(team.id)) return
+    const timer = setTimeout(() => {
+      noticeTimers.delete(team.id)
+      flushNotices(team, force).catch(error => {
+        console.error('[dsh-session-team] notice flush failed:', error)
+      })
+    }, Math.max(0, config.digestDebounceMs))
+    if (typeof timer.unref === 'function') timer.unref()
+    noticeTimers.set(team.id, timer)
+  }
+
   /** 某个 Lead 变空闲时投递它团队的汇报。 */
   ctx.effect(
     () => ctx.on('agent/status', payload => {
@@ -563,6 +656,7 @@ export async function apply(ctx, config) {
       const team = teams.find(candidate => candidate.lead === agentId)
       if (team === undefined) return
       if (pendingReportsOf(team).length > 0) scheduleDelivery(team, false)
+      if (pendingNoticesOf(team).length > 0) scheduleNoticeDelivery(team, false)
     }),
     'session-team: lead idle delivery',
   )
@@ -572,6 +666,8 @@ export async function apply(ctx, config) {
     () => () => {
       for (const timer of deliveryTimers.values()) clearTimeout(timer)
       deliveryTimers.clear()
+      for (const timer of noticeTimers.values()) clearTimeout(timer)
+      noticeTimers.clear()
       if (teamsTimer !== null) clearTimeout(teamsTimer)
       if (ledgerTimer !== null) clearTimeout(ledgerTimer)
     },
@@ -795,6 +891,8 @@ export async function apply(ctx, config) {
     activeTeamId = team.id
     scheduleTeamsSave()
     scheduleDelivery(team, false)
+    const leadName = team.members.find(member => member.sessionId === team.lead)?.name ?? ''
+    queueRosterNotice(team, `团队已创建，Lead 是「${leadName}」。`, team.members.map(member => member.sessionId))
     return {
       team: { id: team.id, name: team.name, lead: team.lead, cwd: team.cwd },
       created: created.map(item => ({
@@ -853,6 +951,8 @@ export async function apply(ctx, config) {
     }
     if (leadSessionId !== '') team.lead = leadSessionId
     scheduleTeamsSave()
+    const names = created.map(item => `${item.name}${item.role === '' ? '' : `（${item.role}）`}`).join('、')
+    queueRosterNotice(team, `新增成员：${names}。`, created.map(item => item.sessionId))
     return { created }
   }
 
@@ -1470,6 +1570,12 @@ export async function apply(ctx, config) {
             && (task.state === 'dispatched' || task.state === 'paused')).length,
           tasks,
           pendingReports: pendingReportsOf(team).length,
+          pendingNotices: pendingNoticesOf(team).length,
+          notices: notices.filter(notice => notice.teamId === team.id).slice(-10).map(notice => ({
+            createdAt: notice.createdAt,
+            delivered: notice.delivered,
+            text: oneLine(notice.text, 300),
+          })),
           reports: reports.filter(report => report.teamId === team.id).slice(-20).map(report => ({
             from: report.name,
             role: report.role,
@@ -1577,19 +1683,26 @@ export async function apply(ctx, config) {
             const items = body.kind === 'add-member'
               ? [body]
               : (Array.isArray(body.items) ? body.items : [])
+            const added = []
             for (const item of items) {
               const sessionId = String(item?.sessionId ?? '').trim()
               if (sessionId === '' || find(sessionId)) continue
-              members.push({
+              const member = {
                 sessionId,
                 name: (typeof item?.name === 'string' ? item.name.trim() : '') || `成员 ${members.length + 1}`,
                 role: typeof item?.role === 'string' ? item.role.trim() : '',
                 stage: Number.isFinite(item?.stage) ? Number(item.stage) : members.length + 1,
-              })
+              }
+              members.push(member)
+              added.push(member)
             }
             team.members = members
             if (team.lead === '' && members.length > 0) team.lead = members[0].sessionId
             scheduleTeamsSave()
+            if (added.length > 0) {
+              const names = added.map(member => `${member.name}${member.role === '' ? '' : `（${member.role}）`}`).join('、')
+              queueRosterNotice(team, `有已有会话加入团队：${names}。`, added.map(member => member.sessionId))
+            }
             return { changed: true, members: members.length, lead: team.lead }
           }
           case 'update-member': {
@@ -1600,16 +1713,19 @@ export async function apply(ctx, config) {
             if (Number.isFinite(body.stage)) member.stage = Number(body.stage)
             team.members = members
             scheduleTeamsSave()
+            queueRosterNotice(team, `成员信息更新：${member.name}${member.role === '' ? '' : `（${member.role}）`}。`, [member.sessionId])
             return { changed: true }
           }
           case 'remove-member': {
             const sessionId = String(body.sessionId ?? '')
             const index = members.findIndex(member => member.sessionId === sessionId)
             if (index < 0) throw new Error('该会话不在团队里')
+            const removed = members[index]
             members.splice(index, 1)
             team.members = members
             if (team.lead === sessionId) team.lead = members[0]?.sessionId ?? ''
             scheduleTeamsSave()
+            queueRosterNotice(team, `成员已移除：${removed.name}。`)
             return { changed: true, members: members.length, lead: team.lead }
           }
           case 'set-lead': {
@@ -1648,6 +1764,7 @@ export async function apply(ctx, config) {
             teams.splice(index, 1)
             if (activeTeamId === id) activeTeamId = teams[0]?.id ?? ''
             for (const report of reports) if (report.teamId === id) report.delivered = true
+            for (const notice of notices) if (notice.teamId === id) notice.delivered = true
             for (const task of assignments) {
               if (task.teamId === id && (task.state === 'dispatched' || task.state === 'paused')) task.state = 'done'
             }
@@ -1776,7 +1893,9 @@ export async function apply(ctx, config) {
           }
           case 'flush': {
             const team = targetTeam(body)
-            return { ok: true, ...(await flushReports(team, true)) }
+            const reportsResult = await flushReports(team, true)
+            const noticesResult = await flushNotices(team, true)
+            return { ok: true, ...reportsResult, notices: noticesResult }
           }
           case 'brief-lead': {
             const team = targetTeam(body)

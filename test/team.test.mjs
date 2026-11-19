@@ -687,6 +687,41 @@ test('拖动排序：reorder-members 重写成员顺序与优先级', async () =
   assert.deepEqual(saved.teams[0].members.map(member => member.sessionId), order)
 })
 
+test('新增成员/新建团队会向 Lead 发送成员变动通知（含角色）', async () => {
+  const h = await harness({ digestDebounceMs: 0 })
+  const created = await h.callRoute('/session-team/action', {
+    method: 'POST',
+    body: {
+      kind: 'create-team',
+      name: '通知团队',
+      cwd: '/tmp/notify',
+      members: [
+        { name: 'lead', role: '统筹', lead: true },
+        { name: 'dev', role: '实现' },
+      ],
+    },
+  })
+  await new Promise(resolve => setTimeout(resolve, 20))
+  const state = await h.callRoute('/session-team/state')
+  assert.ok(state.team.pendingNotices >= 1, '创建团队后应有成员变动通知')
+  h.setStatus(created.created[0].sessionId, { active: true, running: false })
+  const flush = await h.callRoute('/session-team/action', { method: 'POST', body: { kind: 'flush' } })
+  assert.equal(flush.notices.delivered >= 1, true)
+  const text = h.prompts.at(-1).content[0].text
+  assert.match(text, /dev（实现）/, '通知里要带新成员的名字与角色')
+  const after = await h.callRoute('/session-team/state')
+  assert.equal(after.team.pendingNotices, 0)
+
+  await h.callRoute('/session-team/action', {
+    method: 'POST',
+    body: { kind: 'create-members', cwd: '/tmp/notify', items: [{ name: 'qa', role: '验收', stage: 3 }] },
+  })
+  await new Promise(resolve => setTimeout(resolve, 20))
+  const ledger = await h.readLedger()
+  const texts = ledger.notices.map(notice => notice.text).join('\n')
+  assert.match(texts, /qa（验收）/, '新增成员通知里要有新成员角色')
+})
+
 test('未知操作返回错误而不是抛出面板路由', async () => {
   const h = await harness(TEAM)
   const payload = await h.callRoute('/session-team/action', {
