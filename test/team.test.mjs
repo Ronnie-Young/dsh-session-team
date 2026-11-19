@@ -661,6 +661,13 @@ test('新建成员时可选择 Agent 模式，状态里暴露模式目录', asyn
   assert.equal(h.createdRequests[2].agentPreset, 'standard')
 })
 
+test('状态里的 version 直接来自 package.json', async () => {
+  const h = await harness(TEAM)
+  const state = await h.callRoute('/session-team/state')
+  const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'))
+  assert.equal(state.version, pkg.version)
+})
+
 test('未知操作返回错误而不是抛出面板路由', async () => {
   const h = await harness(TEAM)
   const payload = await h.callRoute('/session-team/action', {

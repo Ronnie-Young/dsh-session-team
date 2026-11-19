@@ -19,9 +19,23 @@ import { dirname, join } from 'node:path'
 import { createRequire } from 'node:module'
 import Schema from '@deepseek-ai/schemastery'
 
-/** 插件版本：唯一来源是 package.json，避免面板/文档与发布版本漂移。 */
+/** 插件版本：唯一来源是 package.json；读取带短缓存，版本号改了不用重启也能显示。 */
 const require = createRequire(import.meta.url)
 const VERSION = require('./package.json').version
+let versionCache = { at: 0, value: VERSION }
+
+/** 读 package.json 的 version（10 秒缓存），读不到时回落到加载时读到的值。 */
+async function readVersion() {
+  const now = Date.now()
+  if (now - versionCache.at < 10_000) return versionCache.value
+  try {
+    const pkg = JSON.parse(await readFile(new URL('./package.json', import.meta.url), 'utf8'))
+    if (typeof pkg.version === 'string' && pkg.version !== '') {
+      versionCache = { at: now, value: pkg.version }
+    }
+  } catch { /* 保持旧值 */ }
+  return versionCache.value
+}
 
 /** 插件名（loader 诊断用）。 */
 export const name = 'session-team'
@@ -1533,7 +1547,7 @@ export async function apply(ctx, config) {
           },
           timings: { teamsMs: teamsStarted - started, detailMs: Date.now() - teamsStarted },
           writable: true,
-          version: VERSION,
+          version: await readVersion(),
           debug: { teams: teams.length, ledgerReports: reports.length, assignments: assignments.length },
           limits: { maxReportsPerDigest: config.maxReportsPerDigest, deliverOnIdle: config.deliverOnIdle },
         }

@@ -213,6 +213,7 @@ window.__ModuleLoader__.load({
     }
 
     let boundT = null
+    let boundLocale = null
     function t(key, params) {
       let text = typeof boundT === 'function' ? boundT(key) : key
       if (typeof text !== 'string') text = key
@@ -392,14 +393,34 @@ window.__ModuleLoader__.load({
       return rows
     }
 
+    /** 内置 preset 的显示名（Host 的目录只带 id，名称由客户端本地化）。 */
+    const presetNames = {
+      zh: { standard: '标准模式', ptc: 'PTC 模式', minimal: '极简模式', cordis: '创造模式' },
+      en: { standard: 'Standard', ptc: 'PTC', minimal: 'Minimal', cordis: 'Creator' }
+    }
+
     /** Agent 模式（preset）下拉项；standard 作为默认。 */
     function presetOptions(state) {
       const list = state?.presets
       if (!Array.isArray(list)) return []
-      return list.filter(preset => preset.broken !== true).map(preset => ({
-        id: preset.id,
-        name: preset.name || preset.id
-      }))
+      return list.filter(preset => preset.broken !== true).map(preset => {
+        const fallback = presetNames[currentLocale()]?.[preset.id]
+        const name = (typeof preset.name === 'string' && preset.name !== '' && preset.name !== preset.id)
+          ? preset.name
+          : (fallback ?? preset.id)
+        return { id: preset.id, name }
+      })
+    }
+
+    /** 当前界面语言（用于内置 preset 名称）。 */
+    function currentLocale() {
+      try {
+        const locale = boundLocale?.()
+        const id = locale?.id ?? ''
+        return id.startsWith('en') ? 'en' : 'zh'
+      } catch {
+        return 'zh'
+      }
     }
 
     function defaultPresetId(state) {
@@ -1208,6 +1229,7 @@ window.__ModuleLoader__.load({
         ctx.effect(() => installStyles(), 'session-team: styles')
         ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'session-team: dictionaries')
         boundT = ctx.locale.bind(NS)
+        boundLocale = () => ctx.locale.getLocale()
         ctx.slots.inject('sidebar.panellist', () =>
           ctx.slots.register({ name: 'sidebar.panellist', id: PANEL_KEY, order: 30, label: () => t('panelLabel'), locale: NS }, PanelIcon)
         )
