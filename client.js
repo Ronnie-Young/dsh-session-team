@@ -404,7 +404,7 @@ window.__ModuleLoader__.load({
 .stm-btn{height:30px;padding:0 12px;border-radius:8px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-primary);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .stm-btn:hover:not(:disabled){border-color:var(--dsw-alias-border-l2)}
 .stm-btn:disabled{opacity:.55;cursor:default}
-.stm-btn-primary{background:var(--stm-brand,var(--dsw-alias-brand-primary));border-color:transparent;color:#fff}
+.stm-btn-primary{background:var(--stm-brand-hover);border-color:transparent;color:var(--stm-brand-ink)}
 .stm-btn-primary:hover:not(:disabled){border-color:transparent;filter:brightness(1.05)}
 .stm-btn-primary:disabled{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary)}
 .stm-btn-ghost{height:26px;padding:0 8px;font-size:12px;background:transparent}
@@ -453,7 +453,9 @@ window.__ModuleLoader__.load({
 .stm-more{margin-top:8px}
 /* —— 工作台 v3 —— */
 .stm-workbench{overflow:hidden!important;padding:56px 20px 18px!important;display:block;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;
-  --stm-brand:var(--dsw-alias-brand-primary,#4d6bfe);
+  --stm-brand:#4f6bf6;
+  --stm-brand-hover:#3f59e0;
+  --stm-brand-ink:#ffffff;
   --stm-success:var(--dsw-alias-state-success-primary,#16a34a);
   --stm-warn:var(--dsw-alias-state-warn-primary,#d97706);
   --stm-danger:var(--dsw-alias-state-error-primary,#dc2626);
@@ -464,6 +466,9 @@ window.__ModuleLoader__.load({
   --stm-warn-weak:color-mix(in srgb,var(--stm-warn) 15%,transparent);
   --stm-danger-weak:color-mix(in srgb,var(--stm-danger) 13%,transparent);
   --stm-idle-weak:color-mix(in srgb,var(--stm-idle) 16%,transparent)}
+@media (prefers-color-scheme: dark) {
+  .stm-workbench{--stm-brand:#7b90ff;--stm-brand-hover:#93a4ff;--stm-brand-ink:#0b0f1a}
+}
 .stm-workbench .stm-wrap{max-width:none!important;width:100%!important;align-self:stretch;height:100%;gap:0}
 .stm-workbench .stm-body{width:100%}
 .stm-topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:0 2px 14px;flex-shrink:0}
@@ -508,7 +513,7 @@ window.__ModuleLoader__.load({
 .stm-status-off{color:var(--dsw-alias-label-secondary)}
 .stm-rail-badge{flex-shrink:0;font-size:10px;font-weight:600;border-radius:999px;padding:0 6px;line-height:15px;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);letter-spacing:.02em}
 .stm-rail-item-on .stm-rail-badge{background:var(--stm-brand-soft);color:var(--stm-brand)}
-.stm-rail-unread{background:var(--stm-brand);color:#fff;border-radius:999px;font-size:10px;font-weight:600;line-height:15px;padding:0 6px;flex-shrink:0}
+.stm-rail-unread{background:var(--stm-brand);color:var(--stm-brand-ink);border-radius:999px;font-size:10px;font-weight:600;line-height:15px;padding:0 6px;flex-shrink:0}
 .stm-main{flex:1;min-width:0;display:flex;flex-direction:column;border-radius:14px;background:var(--dsw-alias-bg-layer-1);overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.05);transition-property:margin-right;transition-duration:200ms;transition-timing-function:cubic-bezier(.2,0,0,1)}
 .stm-main-aside{margin-right:0}
 .stm-chat-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px 10px 18px;flex-shrink:0;border-bottom:1px solid var(--dsw-alias-border-l1);flex-wrap:wrap}
@@ -530,7 +535,7 @@ window.__ModuleLoader__.load({
 .stm-chat-head{background:rgba(0,0,0,.015);background:color-mix(in srgb,var(--dsw-alias-label-primary) 2.5%,var(--dsw-alias-bg-layer-1))}
 .stm-compose-wrap{background:rgba(0,0,0,.015);background:color-mix(in srgb,var(--dsw-alias-label-primary) 2.5%,var(--dsw-alias-bg-layer-1))}
 .stm-turn-head{display:flex;align-items:center;gap:8px}
-.stm-avatar{width:22px;height:22px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;background:var(--stm-brand);color:#fff;font-size:10px;font-weight:700;letter-spacing:.02em;flex-shrink:0}
+.stm-avatar{width:22px;height:22px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;background:var(--stm-brand);color:var(--stm-brand-ink);font-size:10px;font-weight:700;letter-spacing:.02em;flex-shrink:0}
 .stm-turn-name{font-size:12.5px;font-weight:600;color:var(--dsw-alias-label-primary)}
 .stm-turn-time{font-size:11px;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums}
 .stm-turn-body{font-size:14px;line-height:1.75;color:var(--dsw-alias-label-primary);padding-left:30px}
@@ -540,7 +545,7 @@ window.__ModuleLoader__.load({
 .stm-tools>summary:hover{color:var(--dsw-alias-label-primary)}
 .stm-tools-body{display:flex;flex-direction:column;gap:4px;margin-top:6px}
 .stm-user-row{display:flex;flex-direction:column;align-items:flex-end;gap:4px;align-self:flex-end;max-width:86%}
-.stm-user-bubble{white-space:normal;background:rgba(77,107,254,.14);background:color-mix(in srgb,var(--stm-brand) 16%,var(--dsw-alias-bg-layer-1));border-radius:16px 16px 5px 16px;padding:10px 14px;font-size:14px;line-height:1.7;color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--stm-brand) 34%,transparent)}
+.stm-user-bubble{white-space:normal;background:rgba(79,107,246,.16);background:color-mix(in srgb,var(--stm-brand) 16%,var(--dsw-alias-bg-layer-1));border-radius:16px 16px 5px 16px;padding:10px 14px;font-size:14px;line-height:1.7;color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--stm-brand) 34%,transparent)}
 .stm-user-meta{font-size:11px;color:var(--stm-brand);font-variant-numeric:tabular-nums;opacity:.85}
 .stm-sys{max-width:100%}
 .stm-sys>summary{cursor:pointer;font-size:11.5px;color:var(--dsw-alias-label-secondary);list-style:none;display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:7px;border:1px dashed var(--dsw-alias-border-l2)}
@@ -565,8 +570,8 @@ window.__ModuleLoader__.load({
 .stm-compose textarea{min-height:64px;max-height:200px}
 .stm-seg{display:inline-flex;background:var(--dsw-alias-bg-layer-2,transparent);border-radius:9px;padding:2px;gap:1px}
 .stm-seg button{border:0;background:transparent;color:var(--dsw-alias-label-secondary);border-radius:7px;font-size:12px;padding:4px 11px;cursor:pointer;transition-property:background-color,color;transition-duration:120ms}
-.stm-seg-on{background:var(--stm-brand) !important;color:#fff !important;font-weight:600;box-shadow:none}
-.stm-send{border:0;border-radius:9px;background:var(--stm-brand,var(--dsw-alias-brand-primary));color:#fff;font-size:13px;font-weight:600;padding:0 16px;height:32px;cursor:pointer;transition-property:opacity,transform,background-color;transition-duration:120ms}
+.stm-seg-on{background:var(--stm-brand) !important;color:var(--stm-brand-ink) !important;font-weight:600;box-shadow:none}
+.stm-send{border:0;border-radius:9px;background:var(--stm-brand-hover);color:var(--stm-brand-ink);font-size:13px;font-weight:600;padding:0 16px;height:32px;cursor:pointer;transition-property:opacity,transform,background-color;transition-duration:120ms}
 .stm-send:hover:not(:disabled){opacity:.88}
 .stm-send:active:not(:disabled){transform:scale(.96)}
 .stm-send:disabled{opacity:.4;cursor:default}
@@ -582,8 +587,8 @@ window.__ModuleLoader__.load({
 .stm-modal-backdrop{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.28);backdrop-filter:blur(2px);animation:stm-fade-in 140ms ease-out}
 @keyframes stm-fade-in{from{opacity:0}to{opacity:1}}
 .stm-modal-card{width:600px;max-width:92vw;max-height:86vh;overflow:auto;background:var(--dsw-alias-bg-layer-1);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 12px 32px -8px rgba(0,0,0,.28),0 32px 64px -16px rgba(0,0,0,.24)}
-.stm-drawer.stm-drawer-out{animation:stm-slide-out 180ms cubic-bezier(.4,0,1,1) forwards}
-@keyframes stm-slide-out{from{transform:translateX(0);opacity:1}to{transform:translateX(24px);opacity:0}}
+.stm-drawer.stm-drawer-out{animation:stm-slide-out 200ms cubic-bezier(.2,0,0,1) forwards}
+@keyframes stm-slide-out{from{transform:translateX(0)}to{transform:translateX(100%)}}
 .stm-drawer-backdrop{position:absolute;inset:0;z-index:35;background:transparent}
 .stm-drawer{position:absolute;top:0;right:0;bottom:0;width:400px;max-width:92%;z-index:40;display:flex;flex-direction:column;background:var(--dsw-alias-bg-layer-1);border-radius:14px 0 0 14px;overflow:hidden;animation:stm-slide-in 200ms cubic-bezier(.2,0,0,1);box-shadow:0 0 0 1px rgba(0,0,0,.06),-8px 0 24px -8px rgba(0,0,0,.2),-24px 0 56px -16px rgba(0,0,0,.16)}
 .stm-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 8px 10px 16px;flex-shrink:0;border-bottom:1px solid var(--dsw-alias-border-l1)}
@@ -2403,6 +2408,7 @@ window.__ModuleLoader__.load({
             h('button', { className: 'stm-ghost-btn', onClick: () => { if (openSession) openSession(sessionId) } }, t('drawerOpenChat')),
             h('button', {
               className: 'stm-ghost-btn',
+              'data-stm-side-toggle': '1',
               onClick: onToggleSide,
               title: t('panelExpand')
             }, t('sideTrigger', { n: taskCount, m: reportCount }), h(Icon, { name: sideOpen ? 'chevron-right' : 'chevron-left' })),
@@ -2664,6 +2670,20 @@ window.__ModuleLoader__.load({
         return () => clearTimeout(timer)
       }, [])
 
+      useEffect(() => {
+        if (sideOpen !== true) return undefined
+        function onPointerDown(event) {
+          if (sideClosing === true) return
+          const target = event.target
+          if (!(target instanceof Element)) return
+          if (target.closest('.stm-drawer')) return
+          if (target.closest('[data-stm-side-toggle]')) return
+          closeSide()
+        }
+        document.addEventListener('mousedown', onPointerDown, true)
+        return () => document.removeEventListener('mousedown', onPointerDown, true)
+      }, [sideOpen, sideClosing])
+
       function closeSide() {
         setSideClosing(true)
         if (sideTimer.current !== null) clearTimeout(sideTimer.current)
@@ -2781,13 +2801,6 @@ window.__ModuleLoader__.load({
               reportCount: unreadCount,
               onSettings: id => setSettingsId(id)
             }),
-            sideOpen || sideClosing
-              ? h('div', {
-                className: 'stm-drawer-backdrop',
-                onClick: closeSide,
-                'aria-hidden': true
-              })
-              : null,
             sideOpen || sideClosing
               ? h(SideDrawer, {
                 state,
