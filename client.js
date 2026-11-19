@@ -14,6 +14,31 @@ window.__ModuleLoader__.load({
     const { useEffect, useRef, useState } = React
     const h = React.createElement
 
+    /** 轻量诊断：把前端事件回传 Host（只在排查时读取）。 */
+    function trace(event, detail) {
+      try {
+        actRaw({ kind: 'client-trace', event, detail: detail === undefined ? null : detail })
+      } catch { /* 忽略 */ }
+    }
+
+    /** 新建角色草稿：放在模块层，弹窗被重建也不会丢。 */
+    const agentDraft = { rows: [], seq: 0 }
+
+    function draftRow(defaults) {
+      agentDraft.seq += 1
+      return {
+        id: `row-${agentDraft.seq}`,
+        name: '',
+        role: '',
+        stage: 0,
+        lead: false,
+        modelKey: '',
+        preset: '',
+        effort: '',
+        ...defaults
+      }
+    }
+
     const NS = 'session-team'
     const ROUTE = '/session-team'
     const VIEW_KEY = 'session-team:view'
@@ -432,7 +457,11 @@ window.__ModuleLoader__.load({
 .stm-grow{flex:1;min-width:0}
 .stm-mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;color:var(--dsw-alias-label-secondary);cursor:pointer;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .stm-section-title{margin:0 0 10px;font-size:13px;font-weight:600;color:var(--dsw-alias-label-secondary)}
-.stm-input:focus, .stm-select:focus, .stm-textarea:focus{outline:none;box-shadow:0 0 0 2px var(--stm-brand-soft)}
+.stm-input,.stm-select{box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);border-radius:8px;font-size:13px;font-family:inherit;padding:0 10px;height:32px;line-height:30px;min-width:0;transition-property:border-color,box-shadow;transition-duration:120ms}
+.stm-input::placeholder{color:var(--dsw-alias-label-secondary);opacity:.75}
+.stm-input:hover,.stm-select:hover{border-color:var(--dsw-alias-border-l2)}
+.stm-select{appearance:none;-webkit-appearance:none;padding-right:26px;background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 15px) 14px,calc(100% - 10px) 14px;background-size:5px 5px,5px 5px;background-repeat:no-repeat;cursor:pointer}
+.stm-input:focus, .stm-select:focus, .stm-textarea:focus{outline:none;border-color:var(--stm-brand);box-shadow:0 0 0 3px var(--stm-brand-weak)}
 .stm-textarea{width:100%;box-sizing:border-box;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);border-radius:8px;font-size:13px;padding:8px 10px;font-family:inherit}
 .stm-textarea:focus{outline:none;box-shadow:0 0 0 2px var(--stm-brand-soft)}
 .stm-textarea{min-height:88px;resize:vertical;line-height:1.6}
@@ -1416,7 +1445,7 @@ window.__ModuleLoader__.load({
 
     /** 在已有团队里「添加一行」新建智能体角色（= 新建 session），支持一次加多行。 */
     /** 新建角色弹窗的内容：行状态由父组件持有，避免重渲染丢失。 */
-    function AgentRoleForm({ state, rows, setRows, onNotice, onDone }) {
+    function AgentRoleForm({ state, onNotice, onDone }) {
       const team = state?.team
       const models = state?.models
       const options = modelOptions(models)
@@ -1426,24 +1455,28 @@ window.__ModuleLoader__.load({
       const [cwd, setCwd] = useState(team?.cwd || state?.defaultCwd || '')
       const [busy, setBusy] = useState(false)
       const canCreate = state?.creations?.canCreate !== false
-      const seq = useRef(rows.length)
+      const [rows, setRows] = useState(() => {
+        if (agentDraft.rows.length === 0) {
+          agentDraft.rows = [draftRow({ stage: team?.members?.length ?? 0, modelKey: fallbackKey, preset: presetDefault })]
+        }
+        return agentDraft.rows
+      })
+
+      useEffect(() => {
+        agentDraft.rows = rows
+      }, [rows])
 
       useEffect(() => {
         setCwd(team?.cwd || state?.defaultCwd || '')
       }, [team?.id])
 
       function addRow() {
-        seq.current += 1
-        setRows(previous => [...previous, {
-          id: `row-${Date.now()}-${seq.current}`,
-          name: '',
-          role: '',
+        trace('dialog:add-row', { from: agentDraft.rows.length })
+        setRows(previous => [...previous, draftRow({
           stage: previous.length,
-          lead: false,
           modelKey: fallbackKey,
-          preset: presetDefault,
-          effort: ''
-        }])
+          preset: presetDefault
+        })])
       }
 
       function patch(id, change) {
@@ -1487,6 +1520,7 @@ window.__ModuleLoader__.load({
           onNotice(t('addAgentCreated', { n: (result.created ?? []).length }))
           const failed = (result.created ?? []).filter(item => item.modelError !== '')
           if (failed.length > 0) onNotice(`${failed.map(item => `${item.name}: ${item.modelError}`).join('; ')}`)
+          agentDraft.rows = []
           if (typeof onDone === 'function') onDone()
         })
       }
@@ -2704,7 +2738,6 @@ window.__ModuleLoader__.load({
       const [addOpen, setAddOpen] = useState(false)
       const [agentOpen, setAgentOpen] = useState(false)
       const [agentClosing, setAgentClosing] = useState(false)
-      const [agentRows, setAgentRows] = useState([])
       const agentTimer = useRef(null)
       const [busy, setBusy] = useState(false)
       const [draft, setDraft] = useState('')
@@ -2786,19 +2819,6 @@ window.__ModuleLoader__.load({
       function openAgentDialog() {
         if (agentTimer.current !== null) clearTimeout(agentTimer.current)
         setAgentClosing(false)
-        const models = state?.models
-        const fallbackKey = models?.default ? `${models.default.provider}\u0001${models.default.model}` : ''
-        const presetDefault = defaultPresetId(state)
-        setAgentRows(previous => previous.length > 0 ? previous : [{
-          id: `row-${Date.now()}`,
-          name: '',
-          role: '',
-          stage: team?.members?.length ?? 0,
-          lead: false,
-          modelKey: fallbackKey,
-          preset: presetDefault,
-          effort: ''
-        }])
         setAgentOpen(true)
       }
 
@@ -2958,8 +2978,6 @@ window.__ModuleLoader__.load({
                 ),
                 h(AgentRoleForm, {
                   state,
-                  rows: agentRows,
-                  setRows: setAgentRows,
                   onNotice,
                   onDone: closeAgentDialog
                 })

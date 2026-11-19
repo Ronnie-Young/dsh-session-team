@@ -159,6 +159,7 @@ export async function apply(ctx, config) {
   let noticeDelivering = false
   let lastLayout = null
   let lastClientError = null
+  const clientTraces = []
   /** 已附带过身份说明的成员。 */
   const briefed = new Set()
 
@@ -1954,6 +1955,7 @@ export async function apply(ctx, config) {
             assignments: assignments.length,
             ...(lastLayout === null ? {} : { layout: lastLayout }),
             ...(lastClientError === null ? {} : { clientError: lastClientError }),
+            ...(clientTraces.length === 0 ? {} : { traces: clientTraces.slice(-12) }),
           },
           limits: { maxReportsPerDigest: config.maxReportsPerDigest, deliverOnIdle: config.deliverOnIdle },
         }
@@ -2096,6 +2098,15 @@ export async function apply(ctx, config) {
             if (!registry || typeof registry.archiveSession !== 'function') throw new Error('workspaceRegistry.archiveSession 不可用')
             await registry.archiveSession(sessionId, { stopActivity: true })
             return { ok: true, sessionId }
+          }
+          case 'client-trace': {
+            clientTraces.push({
+              event: String(body.event ?? ''),
+              detail: body.detail ?? null,
+              at: new Date().toISOString(),
+            })
+            if (clientTraces.length > 40) clientTraces.splice(0, clientTraces.length - 40)
+            return { ok: true }
           }
           case 'client-error': {
             // 前端渲染异常回传（仅排查用）。
