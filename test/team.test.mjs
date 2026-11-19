@@ -101,6 +101,27 @@ async function harness(configInput, options = {}) {
       }
     },
   }
+  const workspaces = []
+  const workspaceRegistry = {
+    async create(path, title) {
+      const existing = workspaces.find(item => item.path === path)
+      if (existing !== undefined) return existing
+      const workspace = {
+        id: `ws-${workspaces.length + 1}`,
+        path,
+        title: title ?? path,
+        sessionIds: [],
+        async attachSession(sessionId) {
+          if (!this.sessionIds.includes(sessionId)) this.sessionIds.push(sessionId)
+        },
+      }
+      workspaces.push(workspace)
+      return workspace
+    },
+    list() {
+      return workspaces
+    },
+  }
   const registrations = []
   const toolsService = {
     register(definition, options = {}) {
@@ -136,6 +157,7 @@ async function harness(configInput, options = {}) {
       if (name === 'configEditor') return exposeEditor ? editor : undefined
       if (name === 'webServer') return webServer
       if (name === 'agentPresets') return { async list() { return presetList } }
+      if (name === 'workspaceRegistry') return workspaceRegistry
       return undefined
     },
     effect(fn) {
@@ -196,6 +218,7 @@ async function harness(configInput, options = {}) {
     ledgerFile: join(stateDir, 'ledger.json'),
     registrations,
     selections,
+    workspaces,
     createdRequests,
     prompts,
     tools,
@@ -720,6 +743,40 @@ test('新增成员/新建团队会向 Lead 发送成员变动通知（含角色�
   const ledger = await h.readLedger()
   const texts = ledger.notices.map(notice => notice.text).join('\n')
   assert.match(texts, /qa（验收）/, '新增成员通知里要有新成员角色')
+})
+
+test('新建的会话会带上 workspaceId，落到项目分组', async () => {
+  const h = await harness({ digestDebounceMs: 0 })
+  await h.callRoute('/session-team/action', {
+    method: 'POST',
+    body: { kind: 'create-team', name: '分组团队', cwd: '/tmp/ws-team', members: [{ name: 'lead', lead: true }, { name: 'dev' }] },
+  })
+  assert.equal(h.createdRequests.length, 2)
+  assert.equal(h.createdRequests[0].workspaceId, 'ws-1', '新建团队时必须带项目分组 id')
+  assert.equal(h.createdRequests[1].workspaceId, 'ws-1')
+  assert.equal(h.workspaces[0].sessionIds.length, 2, '新会话要挂进项目分组')
+
+  await h.callRoute('/session-team/action', {
+    method: 'POST',
+    body: { kind: 'create-members', cwd: '/tmp/ws-team', items: [{ name: 'qa', role: '验收' }] },
+  })
+  assert.equal(h.createdRequests[2].workspaceId, 'ws-1', '团队内新增角色也要落进同一分组')
+})
+
+test('attach-workspace 会补齐未归组的成员', async () => {
+  const h = await harness({ digestDebounceMs: 0 })
+  await h.callRoute('/session-team/action', {
+    method: 'POST',
+    body: { kind: 'create-team', name: '整理团队', cwd: '/tmp/ws-team2', members: [{ name: 'lead', lead: true }, { name: 'dev' }] },
+  })
+  const workspace = h.workspaces.find(item => item.path === '/tmp/ws-team2')
+  assert.equal(workspace.sessionIds.length, 2, '新建时已经归组')
+  workspace.sessionIds.length = 0 // 模拟修复前的老成员：还没挂进分组
+  const result = await h.callRoute('/session-team/action', { method: 'POST', body: { kind: 'attach-workspace' } })
+  assert.equal(result.ok, true)
+  assert.equal(result.attached, 2)
+  assert.equal(result.skipped, 0)
+  assert.equal(workspace.sessionIds.length, 2, '补齐后成员都归组')
 })
 
 test('未知操作返回错误而不是抛出面板路由', async () => {

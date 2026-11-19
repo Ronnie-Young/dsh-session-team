@@ -35,6 +35,9 @@ window.__ModuleLoader__.load({
       briefing: '生成 Lead 说明',
       pending: '待读汇报',
       noticesPending: '待通知',
+      groupWorkspace: '归入项目分组',
+      groupedDone: '已归入项目分组：{n} 个会话',
+      groupedNone: '会话已经在项目分组里了',
       tabOpen: '未完成',
       tabAll: '全部',
       tabUnread: '未读',
@@ -146,6 +149,9 @@ window.__ModuleLoader__.load({
       briefing: 'Brief the Lead',
       pending: 'Unread reports',
       noticesPending: 'notices pending',
+      groupWorkspace: 'Group into workspace',
+      groupedDone: 'Grouped into the project workspace: {n} sessions',
+      groupedNone: 'Sessions are already grouped',
       tabOpen: 'Open',
       tabAll: 'All',
       tabUnread: 'Unread',
@@ -1354,6 +1360,22 @@ window.__ModuleLoader__.load({
               h(Button, { onClick: () => refresh(), disabled: false }, t('refresh')),
               h(Button, { onClick: () => run({ kind: 'flush' }, `${t('done')}: ${t('flush')}`), disabled: busy || !team.lead }, t('flush')),
               h(Button, { onClick: () => run({ kind: 'brief-lead' }, `${t('done')}: ${t('briefing')}`), disabled: busy || !team.lead }, t('briefing')),
+              h(Button, {
+                onClick: () => {
+                  setBusy(true)
+                  act(withTeam(state, { kind: 'attach-workspace' })).then(result => {
+                    setBusy(false)
+                    if (!result.ok) {
+                      onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+                      return
+                    }
+                    onNotice(result.attached > 0
+                      ? t('groupedDone', { n: result.attached })
+                      : t('groupedNone'))
+                  })
+                },
+                disabled: busy
+              }, t('groupWorkspace')),
               h(Button, { onClick: () => setAddOpen(!addOpen) }, addOpen ? t('cancel') : t('addMember')),
               h(Button, {
                 onClick: () => {

@@ -508,6 +508,44 @@ export async function apply(ctx, config) {
     }
   }
 
+  // ---- 项目分组（workspace） ----
+
+  /** 团队 cwd 对应的持久工作区：不存在就建一个，让新会话直接落到项目分组里。 */
+  async function workspaceFor(cwd, title) {
+    const registry = ctx.get('workspaceRegistry')
+    if (!registry || typeof registry.create !== 'function') return null
+    const path = String(cwd ?? '').trim()
+    if (path === '' || !path.startsWith('/')) return null
+    try {
+      return await registry.create(path, String(title ?? ''))
+    } catch {
+      return null
+    }
+  }
+
+  /** 把若干会话挂到团队工作区；已属于其他工作区的会话不搬动。 */
+  async function attachSessionsToWorkspace(workspace, sessionIds) {
+    if (workspace === null || typeof workspace.attachSession !== 'function') return { attached: 0, skipped: 0 }
+    const registry = ctx.get('workspaceRegistry')
+    const owned = new Set()
+    try {
+      for (const item of registry?.list?.() ?? []) {
+        for (const id of item.sessionIds ?? []) owned.add(id)
+      }
+    } catch { /* 忽略 */ }
+    let attached = 0
+    let skipped = 0
+    for (const sessionId of sessionIds) {
+      if (typeof sessionId !== 'string' || sessionId === '') continue
+      if (owned.has(sessionId)) { skipped += 1; continue }
+      try {
+        await workspace.attachSession(sessionId)
+        attached += 1
+      } catch { skipped += 1 }
+    }
+    return { attached, skipped }
+  }
+
   // ---- 汇报 ----
 
   const pendingReportsOf = team => reports.filter(report => !report.delivered && report.teamId === team.id)
@@ -842,6 +880,7 @@ export async function apply(ctx, config) {
     if (!cwd.startsWith('/')) throw new Error('工作目录必须是绝对路径')
     const rows = Array.isArray(request?.members) ? request.members : []
     if (rows.length === 0) throw new Error('至少需要一个成员')
+    const workspace = await workspaceFor(cwd, name)
     const created = []
     for (const [index, row] of rows.entries()) {
       const memberName = String(row?.name ?? '').trim() || `成员 ${index + 1}`
@@ -851,6 +890,7 @@ export async function apply(ctx, config) {
       try {
         const value = await controller.create({
           cwd,
+          ...(workspace === null ? {} : { workspaceId: workspace.id }),
           ...(typeof row?.agentPreset === 'string' && row.agentPreset !== '' ? { agentPreset: row.agentPreset } : {}),
         })
         sessionId = value.sessionId
@@ -890,6 +930,9 @@ export async function apply(ctx, config) {
     teams.push(team)
     activeTeamId = team.id
     scheduleTeamsSave()
+    if (workspace !== null) {
+      await attachSessionsToWorkspace(workspace, created.map(item => item.sessionId))
+    }
     scheduleDelivery(team, false)
     const leadName = team.members.find(member => member.sessionId === team.lead)?.name ?? ''
     queueRosterNotice(team, `团队已创建，Lead 是「${leadName}」。`, team.members.map(member => member.sessionId))
@@ -920,6 +963,7 @@ export async function apply(ctx, config) {
     if (cwd === '') throw new Error('需要指定工作目录（cwd）')
     if (!cwd.startsWith('/')) throw new Error('工作目录必须是绝对路径')
     if (team.cwd === '') team.cwd = cwd
+    const workspace = await workspaceFor(cwd, team.name)
     const created = []
     let leadSessionId = ''
     for (const [index, row] of rows.entries()) {
@@ -928,6 +972,7 @@ export async function apply(ctx, config) {
       const stage = Number.isFinite(row?.stage) ? Number(row.stage) : team.members.length + index + 1
       const value = await controller.create({
         cwd,
+        ...(workspace === null ? {} : { workspaceId: workspace.id }),
         ...(typeof row?.agentPreset === 'string' && row.agentPreset !== '' ? { agentPreset: row.agentPreset } : {}),
       })
       const sessionId = value.sessionId
@@ -951,6 +996,9 @@ export async function apply(ctx, config) {
     }
     if (leadSessionId !== '') team.lead = leadSessionId
     scheduleTeamsSave()
+    if (workspace !== null) {
+      await attachSessionsToWorkspace(workspace, created.map(item => item.sessionId))
+    }
     const names = created.map(item => `${item.name}${item.role === '' ? '' : `（${item.role}）`}`).join('、')
     queueRosterNotice(team, `新增成员：${names}。`, created.map(item => item.sessionId))
     return { created }
@@ -1703,6 +1751,8 @@ export async function apply(ctx, config) {
             if (added.length > 0) {
               const names = added.map(member => `${member.name}${member.role === '' ? '' : `（${member.role}）`}`).join('、')
               queueRosterNotice(team, `有已有会话加入团队：${names}。`, added.map(member => member.sessionId))
+              const workspace = await workspaceFor(team.cwd, team.name)
+              await attachSessionsToWorkspace(workspace, added.map(member => member.sessionId))
             }
             return { changed: true, members: members.length, lead: team.lead }
           }
@@ -1757,6 +1807,14 @@ export async function apply(ctx, config) {
           case 'create-team': {
             const created = await createTeam(body, idleSignal())
             return { ok: true, ...created }
+          }
+          case 'attach-workspace': {
+            const team = targetTeam(body)
+            if (team.cwd === '') throw new Error('团队还没有工作目录')
+            const workspace = await workspaceFor(team.cwd, team.name)
+            if (workspace === null) throw new Error('workspaceRegistry 不可用，无法归入项目分组')
+            const result = await attachSessionsToWorkspace(workspace, team.members.map(member => member.sessionId))
+            return { ok: true, workspaceId: workspace.id, title: workspace.title, ...result }
           }
           case 'delete-team': {
             const id = String(body.teamId ?? '')
