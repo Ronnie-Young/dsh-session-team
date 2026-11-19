@@ -2330,12 +2330,23 @@ window.__ModuleLoader__.load({
               ? h('div', { className: 'stm-empty' }, loading ? t('drawerLoading') : t('chatEmpty'))
               : transcript.messages.length === 0
                 ? h('div', { className: 'stm-empty' }, t('chatEmpty'))
-                : transcript.messages.map(message => h(MessageRow, {
-                  key: message.seq,
-                  message,
-                  expanded: expanded.has(message.seq),
-                  onToggle: () => toggleMessage(message.seq)
-                })),
+                : buildTurns(transcript.messages).map(turn => {
+                  if (turn.kind === 'user') return h(UserTurn, { key: `u-${turn.seq}`, turn })
+                  if (turn.kind === 'assistant') {
+                    return h(AssistantTurn, {
+                      key: `a-${turn.seq}`,
+                      turn,
+                      expanded: expanded.has(turn.seq),
+                      onToggle: () => toggleMessage(turn.seq)
+                    })
+                  }
+                  return h('details', { key: `t-${turn.seq}`, className: 'stm-tools' },
+                    h('summary', null, `${t('toolCalls')} ${turn.tools.length}`),
+                    h('div', { className: 'stm-tools-body' },
+                      turn.tools.map((tool, index) => h('div', { className: 'stm-tool', key: index, title: tool.args }, `${tool.name} ${tool.args}`))
+                    )
+                  )
+                }),
             running
               ? h('div', { className: 'stm-live' },
                 h('div', { className: 'stm-live-head' },
