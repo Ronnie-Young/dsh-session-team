@@ -908,6 +908,18 @@ test('client.js 里用 h() 引用的组件都有定义（防止改名后白屏�
   assert.deepEqual(missing, [], `未定义的组件：${missing.join(', ')}`)
 })
 
+test('创建成员时不会同时传 workspaceId 和 cwd（session.create 只接受其一）', async () => {
+  const h = await harness({ digestDebounceMs: 0 })
+  await h.callRoute('/session-team/action', {
+    method: 'POST',
+    body: { kind: 'create-team', name: '分组校验', cwd: '/tmp/ws-both', members: [{ name: 'lead', lead: true }] },
+  })
+  for (const request of h.createdRequests) {
+    const both = request.workspaceId !== undefined && request.cwd !== undefined
+    assert.equal(both, false, `create 请求不能同时带 workspaceId 与 cwd：${JSON.stringify(request)}`)
+  }
+})
+
 test('未知操作返回错误而不是抛出面板路由', async () => {
   const h = await harness(TEAM)
   const payload = await h.callRoute('/session-team/action', {

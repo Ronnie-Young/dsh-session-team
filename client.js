@@ -625,6 +625,7 @@ window.__ModuleLoader__.load({
 .stm-dialog-hint{margin:0;font-size:12.5px;line-height:1.65;color:var(--dsw-alias-label-secondary);text-wrap:pretty}
 .stm-dialog-title{margin:0;font-size:15px;font-weight:650;letter-spacing:-.01em;color:var(--dsw-alias-label-primary)}
 .stm-dialog-sub{margin:2px 0 0;font-size:11.5px;color:var(--dsw-alias-label-secondary)}
+.stm-dialog-error{padding:9px 12px;border-radius:9px;font-size:12.5px;line-height:1.6;color:var(--stm-danger);background:var(--stm-danger-weak,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--stm-danger) 26%,transparent)}
 .stm-dialog-empty{padding:20px;text-align:center;font-size:12.5px;color:var(--dsw-alias-label-secondary);border:1px dashed var(--dsw-alias-border-l2);border-radius:10px}
 .stm-field-block{display:flex;flex-direction:column;gap:5px;font-size:11px;letter-spacing:.03em;text-transform:uppercase;font-weight:600;color:var(--dsw-alias-label-secondary);min-width:0}
 .stm-field-block .stm-input,.stm-field-block .stm-select{width:100%;height:32px;box-sizing:border-box}
@@ -1525,22 +1526,32 @@ window.__ModuleLoader__.load({
           }
         })
         setBusy(true)
+        setFormError('')
+        trace('dialog:create-start', { items: items.length, workspace: Boolean(state?.team?.cwd) })
         act(withTeam(state, { kind: 'create-members', cwd: cwd.trim(), items })).then(result => {
           setBusy(false)
           if (!result.ok) {
-            onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+            const reason = result.error?.message ?? result.error ?? 'unknown'
+            trace('dialog:create-failed', { reason: String(reason) })
+            setFormError(String(reason))
+            onNotice(`${t('failed')}: ${reason}`)
             return
           }
           onNotice(t('addAgentCreated', { n: (result.created ?? []).length }))
           const failed = (result.created ?? []).filter(item => item.modelError !== '')
           if (failed.length > 0) onNotice(`${failed.map(item => `${item.name}: ${item.modelError}`).join('; ')}`)
           agentDraft.rows = []
+          setFormError('')
+          trace('dialog:create-ok', { created: (result.created ?? []).length })
           if (typeof onDone === 'function') onDone()
         })
       }
 
       return h('div', { className: 'stm-dialog' },
         h('div', { className: 'stm-dialog-body', ref: bodyRef },
+          formError === ''
+            ? null
+            : h('div', { className: 'stm-dialog-error' }, `${t('failed')}: ${formError}`),
           h('label', { className: 'stm-field-block' }, t('cwd'),
             h('input', {
               className: 'stm-input',

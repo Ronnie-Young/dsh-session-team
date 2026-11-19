@@ -1133,8 +1133,8 @@ export async function apply(ctx, config) {
       let sessionId
       try {
         const value = await controller.create({
-          cwd,
-          ...(workspace === null ? {} : { workspaceId: workspace.id }),
+          // session.create 只接受 workspaceId 或 cwd 之一，同时传会被拒绝。
+          ...(workspace === null ? { cwd } : { workspaceId: workspace.id }),
           ...(typeof row?.agentPreset === 'string' && row.agentPreset !== '' ? { agentPreset: row.agentPreset } : {}),
         })
         sessionId = value.sessionId
@@ -1215,8 +1215,7 @@ export async function apply(ctx, config) {
       const role = String(row?.role ?? '').trim()
       const stage = Number.isFinite(row?.stage) ? Number(row.stage) : team.members.length + index + 1
       const value = await controller.create({
-        cwd,
-        ...(workspace === null ? {} : { workspaceId: workspace.id }),
+        ...(workspace === null ? { cwd } : { workspaceId: workspace.id }),
         ...(typeof row?.agentPreset === 'string' && row.agentPreset !== '' ? { agentPreset: row.agentPreset } : {}),
       })
       const sessionId = value.sessionId
