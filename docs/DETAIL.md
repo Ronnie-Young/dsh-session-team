@@ -18,6 +18,8 @@
 - **一个 Lead**：只有该团队的 Lead 能看到 `team_roster`、`team_dispatch`、`team_collect`、
   `team_models`、`team_recover`；普通成员只看到 `team_report`。工具按**调用者所在的团队**工作，
   不同团队互相隔离。
+- **角色对话抽屉**：`GET /session-team/transcript?session=&limit=` 只读读取最近消息（`sessionController.events`），
+  精简为 user / assistant / tool 三类，客户端抽屉从右向左滑出，可切换角色、静默轮询刷新；
 - **项目分组**：创建会话时传入该团队目录对应的 `workspaceId`，并把会话 `attachSession` 到该项目；
   从已有会话加入时只补挂不属于其他项目的会话；`attach-workspace` 动作可整体补齐；
 - **长列表优化**：任务/汇报卡片带「未完成 / 全部」「未读 / 全部」标签页与计数，默认只看未完成与未读；

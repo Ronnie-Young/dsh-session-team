@@ -11,7 +11,7 @@ window.__ModuleLoader__.load({
   id: 'dsh-session-team',
   factory: (require) => {
     const React = require('react')
-    const { useEffect, useState } = React
+    const { useEffect, useRef, useState } = React
     const h = React.createElement
 
     const NS = 'session-team'
@@ -35,6 +35,20 @@ window.__ModuleLoader__.load({
       briefing: '生成 Lead 说明',
       pending: '待读汇报',
       noticesPending: '待通知',
+      viewChat: '对话',
+      user: '用户',
+      tools: '工具',
+      drawerTitle: '角色对话',
+      drawerStatus: '状态',
+      drawerRunning: '运行中',
+      drawerIdle: '空闲',
+      drawerOff: '未激活',
+      drawerEmpty: '还没有对话内容',
+      drawerLoading: '读取中…',
+      drawerFailed: '读取对话失败：{msg}',
+      drawerOpenChat: '打开正式会话',
+      drawerRefresh: '刷新',
+      leadTarget: 'Lead（管理）',
       groupWorkspace: '归入项目分组',
       groupedDone: '已归入项目分组：{n} 个会话',
       groupedNone: '会话已经在项目分组里了',
@@ -149,6 +163,20 @@ window.__ModuleLoader__.load({
       briefing: 'Brief the Lead',
       pending: 'Unread reports',
       noticesPending: 'notices pending',
+      viewChat: 'Chat',
+      user: 'User',
+      tools: 'Tools',
+      drawerTitle: 'Role conversation',
+      drawerStatus: 'Status',
+      drawerRunning: 'Running',
+      drawerIdle: 'Idle',
+      drawerOff: 'Inactive',
+      drawerEmpty: 'No messages yet',
+      drawerLoading: 'Loading…',
+      drawerFailed: 'Failed to read conversation: {msg}',
+      drawerOpenChat: 'Open chat',
+      drawerRefresh: 'Refresh',
+      leadTarget: 'Lead (management)',
       groupWorkspace: 'Group into workspace',
       groupedDone: 'Grouped into the project workspace: {n} sessions',
       groupedNone: 'Sessions are already grouped',
@@ -306,6 +334,20 @@ window.__ModuleLoader__.load({
 .stm-tab{border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-secondary);border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer}
 .stm-tab-on{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l2)}
 .stm-more{margin-top:8px}
+.stm-drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:92vw;background:var(--dsw-alias-bg-layer-1);border-left:1px solid var(--dsw-alias-border-l1);box-shadow:-12px 0 32px rgba(0,0,0,.18);z-index:60;display:flex;flex-direction:column;animation:stm-slide-in .18s ease-out}
+@keyframes stm-slide-in{from{transform:translateX(100%)}to{transform:translateX(0)}}
+.stm-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.stm-drawer-title{font-size:15px;font-weight:600;color:var(--dsw-alias-label-primary)}
+.stm-drawer-sub{font-size:12px;color:var(--dsw-alias-label-secondary)}
+.stm-drawer-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.stm-msg{display:flex;flex-direction:column;gap:3px;padding:7px 14px;border-bottom:1px solid var(--dsw-alias-border-l1);font-size:12px;line-height:1.6}
+.stm-msg:last-child{border-bottom:0}
+.stm-msg-role{font-size:11px;font-weight:600;color:var(--dsw-alias-label-secondary)}
+.stm-msg-user .stm-msg-role{color:var(--dsw-alias-brand-primary,var(--dsw-alias-label-primary))}
+.stm-msg-text{color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word}
+.stm-msg-tools{font-size:11px;color:var(--dsw-alias-label-secondary)}
+.stm-drawer-transcript{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.stm-drawer-foot{display:flex;gap:8px;justify-content:flex-end;padding:10px 14px;border-top:1px solid var(--dsw-alias-border-l1)}
 .stm-candidate{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--dsw-alias-border-l1)}
 .stm-candidate:last-child{border-bottom:0}
 .stm-candidate-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -394,6 +436,14 @@ window.__ModuleLoader__.load({
 
     function withTeam(state, body) {
       return { ...body, teamId: state?.activeTeamId ?? '' }
+    }
+
+    /** 读一个会话最近的对话（只读，不激活 Agent）。 */
+    async function fetchTranscript(sessionId, limit = 30) {
+      const response = await fetch(`${ROUTE}/transcript?session=${encodeURIComponent(sessionId)}&limit=${limit}`, {
+        headers: { accept: 'application/json' }
+      })
+      return await response.json()
     }
 
     // ---- 小组件 ----
@@ -677,7 +727,7 @@ window.__ModuleLoader__.load({
 
     function MemberRow({
       member, models, state, onNotice, index, isFirst, isLast,
-      onMove, onDragStart, onDragOver, onDrop, onDragEnd, dragging
+      onMove, onDragStart, onDragOver, onDrop, onDragEnd, dragging, onViewChat
     }) {
       const options = modelOptions(models)
       const current = member.model
@@ -812,6 +862,7 @@ window.__ModuleLoader__.load({
             )
             : null
         ),
+        h(Button, { ghost: true, onClick: () => { if (typeof onViewChat === 'function') onViewChat(member.sessionId) } }, t('viewChat')),
         h(Button, { ghost: true, onClick: () => { if (openSession) openSession(member.sessionId) } }, t('open')),
         h(Button, { ghost: true, onClick: () => setEditing(true) }, t('role')),
         h(Button, { ghost: true, disabled: isFirst === true, onClick: () => { if (typeof onMove === 'function') onMove(-1) } }, '↑'),
@@ -1061,6 +1112,7 @@ window.__ModuleLoader__.load({
 
     function DispatchBox({ state, onNotice }) {
       const members = state?.team?.members ?? []
+      const leadMember = members.find(member => member.lead) ?? null
       const [target, setTarget] = useState('all')
       const [text, setText] = useState('')
       const [mode, setMode] = useState('queue')
@@ -1089,7 +1141,10 @@ window.__ModuleLoader__.load({
         h('div', { className: 'stm-inline' },
           h('label', { className: 'stm-field', style: { flex: '1' } }, t('target'),
             h('select', { className: 'stm-select', value: target, onChange: event => setTarget(event.target.value) },
-              h('option', { value: 'all', key: 'all' }, t('all')),
+              h('option', { value: 'all', key: 'all' }, `${t('all')}（${members.filter(member => !member.lead).length}）`),
+              leadMember
+                ? h('option', { value: 'lead', key: 'lead' }, `${t('leadTarget')}：${leadMember.name}`)
+                : null,
               members.filter(member => !member.lead).map(member =>
                 h('option', { value: member.sessionId, key: member.sessionId }, member.name))
             )
@@ -1110,6 +1165,97 @@ window.__ModuleLoader__.load({
         }),
         h('div', { className: 'stm-inline', style: { marginTop: '8px' } },
           h(Button, { primary: true, onClick: send, disabled: busy || text.trim() === '' }, busy ? t('sending') : t('send'))
+        )
+      )
+    }
+
+    /** 右侧滑出抽屉：观察某个角色的对话（不切换左侧会话列表）。 */
+    function TranscriptDrawer({ state, sessionId, onClose, onSelect }) {
+      const members = state?.team?.members ?? []
+      const member = members.find(candidate => candidate.sessionId === sessionId) ?? null
+      const [transcript, setTranscript] = useState(null)
+      const [error, setError] = useState('')
+      const [loading, setLoading] = useState(false)
+      const scrollRef = useRef(null)
+      const lastSeq = transcript?.messages?.length ? transcript.messages[transcript.messages.length - 1].seq : -1
+
+      async function load(quiet) {
+        if (member === null) return
+        if (quiet !== true) setLoading(true)
+        try {
+          const payload = await fetchTranscript(member.sessionId, 30)
+          if (payload.ok === false) {
+            setError(payload.error ?? 'unknown')
+            return
+          }
+          setError('')
+          setTranscript(payload)
+        } catch (cause) {
+          setError(String(cause))
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      useEffect(() => {
+        setTranscript(null)
+        setError('')
+        load()
+      }, [member?.sessionId])
+
+      useEffect(() => {
+        const timer = setInterval(() => { load(true) }, 2500)
+        return () => clearInterval(timer)
+      }, [member?.sessionId])
+
+      useEffect(() => {
+        const element = scrollRef.current
+        if (element !== null && element !== undefined) element.scrollTop = element.scrollHeight
+      }, [lastSeq])
+
+      const status = member === null
+        ? { kind: 'off', label: t('drawerOff') }
+        : member.running ? { kind: 'running', label: t('drawerRunning') }
+          : member.active ? { kind: 'idle', label: t('drawerIdle') }
+            : { kind: 'off', label: t('drawerOff') }
+
+      return h('div', { className: 'stm-drawer' },
+        h('div', { className: 'stm-drawer-head' },
+          h('div', null,
+            h('div', { className: 'stm-drawer-title' }, member === null ? t('drawerTitle') : member.name),
+            h('div', { className: 'stm-drawer-sub' },
+              member === null ? '' : `${member.role === '' ? '-' : member.role} · ${status.label} · ${t('stage')} ${member.stage}`,
+              error === '' ? '' : ` · ${t('drawerFailed', { msg: error })}`)
+          ),
+          h(Button, { ghost: true, onClick: onClose }, t('cancel'))
+        ),
+        h('div', { className: 'stm-drawer-tabs' },
+          members.map(candidate => h('button', {
+            key: candidate.sessionId,
+            className: `stm-tab${candidate.sessionId === sessionId ? ' stm-tab-on' : ''}`,
+            onClick: () => onSelect(candidate.sessionId)
+          }, `${candidate.name}${candidate.lead ? ` · ${t('lead')}` : ''}`))
+        ),
+        h('div', { className: 'stm-drawer-transcript', ref: scrollRef },
+          transcript === null
+            ? h('div', { className: 'stm-empty' }, loading ? t('drawerLoading') : t('drawerEmpty'))
+            : transcript.messages.length === 0
+              ? h('div', { className: 'stm-empty' }, t('drawerEmpty'))
+              : transcript.messages.map(message => h('div', { key: message.seq, className: `stm-msg stm-msg-${message.role}` },
+                h('div', { className: 'stm-msg-role' },
+                  `${message.role === 'user' ? t('user') : message.role === 'assistant' ? 'Assistant' : 'Tool'}`,
+                  message.time > 0 ? ` · ${new Date(message.time).toLocaleTimeString('zh-CN', { hour12: false })}` : ''),
+                h('div', { className: 'stm-msg-text' }, message.text),
+                message.tools !== undefined && message.tools.length > 0
+                  ? h('div', { className: 'stm-msg-tools' }, `${t('tools')}: ${message.tools.join(', ')}`)
+                  : null
+              ))
+        ),
+        h('div', { className: 'stm-drawer-foot' },
+          h(Button, { ghost: true, onClick: () => load() }, t('drawerRefresh')),
+          member === null
+            ? null
+            : h(Button, { primary: true, onClick: () => { if (openSession) openSession(member.sessionId) } }, t('drawerOpenChat'))
         )
       )
     }
@@ -1310,6 +1456,7 @@ window.__ModuleLoader__.load({
       const [addOpen, setAddOpen] = useState(false)
       const [agentOpen, setAgentOpen] = useState(false)
       const [dragFrom, setDragFrom] = useState(-1)
+      const [drawerId, setDrawerId] = useState('')
       const [busy, setBusy] = useState(false)
       const team = state?.team
       if (!team) {
@@ -1410,7 +1557,8 @@ window.__ModuleLoader__.load({
                 onDragOver: event => { event.preventDefault() },
                 onDrop: () => moveMember(dragFrom, index),
                 onDragEnd: () => setDragFrom(-1),
-                dragging: dragFrom === index
+                dragging: dragFrom === index,
+                onViewChat: id => setDrawerId(id)
               })),
             agentOpen
               ? h(AddAgentRows, {
@@ -1425,6 +1573,14 @@ window.__ModuleLoader__.load({
           team.members.length > 0 ? h(DispatchBox, { state, onNotice }) : null,
           h(TaskCard, { state, onNotice }),
           h(ReportList, { state }),
+          drawerId === ''
+            ? null
+            : h(TranscriptDrawer, {
+              state,
+              sessionId: drawerId,
+              onClose: () => setDrawerId(''),
+              onSelect: id => setDrawerId(id)
+            }),
           h('div', { className: 'stm-hint' }, `dsh-session-team v${state?.version ?? '?'}`)
         )
       )

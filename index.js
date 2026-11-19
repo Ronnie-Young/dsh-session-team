@@ -508,6 +508,75 @@ export async function apply(ctx, config) {
     }
   }
 
+  // ---- 会话对话预览（右侧抽屉） ----
+
+  /** 把消息 content 里的文本块拼成一段文字。 */
+  function textOfBlocks(blocks) {
+    if (!Array.isArray(blocks)) return ''
+    const parts = []
+    for (const block of blocks) {
+      if (block === null || typeof block !== 'object') continue
+      if (block.type === 'text' && typeof block.text === 'string') parts.push(block.text)
+    }
+    return parts.join('\n').trim()
+  }
+
+  /** 助手消息里请求过的工具名（去重、最多 6 个）。 */
+  function toolNamesOf(blocks) {
+    if (!Array.isArray(blocks)) return []
+    const names = []
+    for (const block of blocks) {
+      if (block === null || typeof block !== 'object') continue
+      if (block.type === 'tool-call' && typeof block.name === 'string' && !names.includes(block.name)) {
+        names.push(block.name)
+      }
+    }
+    return names.slice(0, 6)
+  }
+
+  /** 读一个会话最近的消息（只读，不激活 Agent）。 */
+  async function transcriptOf(sessionId, limit, signal) {
+    const controller = ctx.get('sessionController')
+    if (!controller || typeof controller.events !== 'function') throw new Error('sessionController 不可用')
+    const page = await controller.events({
+      address: { kind: 'session', sessionId },
+      maxMessages: limit,
+    }, signal ?? idleSignal())
+    const messages = []
+    for (const record of page?.records ?? []) {
+      const event = record?.event
+      if (event === null || typeof event !== 'object') continue
+      const data = event.data ?? {}
+      const seq = Number(event.seq) || 0
+      const time = Number(event.time) || 0
+      if (event.type === 'user/message') {
+        const text = textOfBlocks(data.content)
+        if (text !== '') messages.push({ seq, time, role: 'user', text: oneLine(text, 1500) })
+      } else if (event.type === 'assistant/message') {
+        const message = data.message ?? {}
+        const text = textOfBlocks(message.content)
+        const tools = toolNamesOf(message.content)
+        if (text !== '' || tools.length > 0) {
+          messages.push({ seq, time, role: 'assistant', text: oneLine(text, 1500), tools })
+        }
+      } else if (event.type === 'tool/call') {
+        messages.push({
+          seq,
+          time,
+          role: 'tool',
+          text: `${String(data.name ?? 'tool')} ${oneLine(String(data.arguments ?? ''), 200)}`.trim(),
+          tools: [],
+        })
+      }
+    }
+    return {
+      sessionId,
+      cursor: Number(page?.cursor ?? -1),
+      hasMore: page?.hasMore === true,
+      messages,
+    }
+  }
+
   // ---- 项目分组（workspace） ----
 
   /** 团队 cwd 对应的持久工作区：不存在就建一个，让新会话直接落到项目分组里。 */
@@ -733,6 +802,9 @@ export async function apply(ctx, config) {
     }
     const byId = team.members.find(member => member.sessionId === text)
     if (byId) return [byId]
+    if ((text === 'lead' || text === 'Lead' || text === '管理') && team.lead !== '') {
+      return team.members.filter(member => member.sessionId === team.lead)
+    }
     const lowered = text.toLowerCase()
     return team.members.filter(member => member.name.toLowerCase() === lowered)
   }
@@ -1982,6 +2054,21 @@ export async function apply(ctx, config) {
         const teamId = params.get('team') ?? ''
         return buildState(signal, probe, teamId)
       }, `session-team: GET ${config.routePath}/state`)
+
+      route(`${config.routePath}/transcript`, async (req, signal) => {
+        if (req.method !== 'GET') return { ok: false, error: 'GET only' }
+        const query = typeof req.url === 'string' ? req.url.split('?')[1] ?? '' : ''
+        const params = new URLSearchParams(query)
+        const sessionId = String(params.get('session') ?? '').trim()
+        if (sessionId === '') return { ok: false, error: '缺少 session 参数' }
+        const limit = Math.min(60, Math.max(5, Number(params.get('limit') ?? 30) || 30))
+        try {
+          const value = await transcriptOf(sessionId, limit, signal)
+          return { ok: true, ...value }
+        } catch (error) {
+          return { ok: false, error: error instanceof Error ? error.message : String(error) }
+        }
+      }, `session-team: GET ${config.routePath}/transcript`)
 
       route(`${config.routePath}/action`, async req => {
         if (req.method !== 'POST') return { ok: false, error: 'POST only' }

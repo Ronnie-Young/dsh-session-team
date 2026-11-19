@@ -89,6 +89,25 @@ async function harness(configInput, options = {}) {
       prompts.push(request)
       return { accepted: true }
     },
+    async events() {
+      return {
+        records: [
+          { type: 'event', event: { type: 'user/message', seq: 1, time: 1795000000000, data: { content: [{ type: 'text', text: '开始做首页' }] } } },
+          {
+            type: 'event',
+            event: {
+              type: 'assistant/message',
+              seq: 2,
+              time: 1795000001000,
+              data: { message: { content: [{ type: 'text', text: '收到，先看目录' }, { type: 'tool-call', id: 'c1', name: 'read', arguments: '{}' }] } }
+            }
+          },
+          { type: 'event', event: { type: 'tool/call', seq: 3, time: 1795000002000, data: { name: 'bash', arguments: '{"command":"ls"}' } } },
+        ],
+        cursor: 3,
+        hasMore: false,
+      }
+    },
     async list() {
       return {
         items: [...status.entries()].map(([sessionId, entry]) => ({
@@ -777,6 +796,33 @@ test('attach-workspace 会补齐未归组的成员', async () => {
   assert.equal(result.attached, 2)
   assert.equal(result.skipped, 0)
   assert.equal(workspace.sessionIds.length, 2, '补齐后成员都归组')
+})
+
+test('transcript 路由返回精简对话（用户/助手/工具）', async () => {
+  const h = await harness(TEAM)
+  const payload = await h.callRoute('/session-team/transcript?session=session-a&limit=10')
+  assert.equal(payload.ok, true)
+  assert.equal(payload.messages.length, 3)
+  assert.deepEqual(payload.messages.map(item => item.role), ['user', 'assistant', 'tool'])
+  assert.match(payload.messages[0].text, /开始做首页/)
+  assert.deepEqual(payload.messages[1].tools, ['read'])
+  assert.match(payload.messages[2].text, /bash/)
+  const missing = await h.callRoute('/session-team/transcript')
+  assert.equal(missing.ok, false)
+})
+
+test('派活可以把 Lead 作为目标', async () => {
+  const h = await harness({ ...TEAM, deliverOnIdle: false })
+  const result = await h.callRoute('/session-team/action', {
+    method: 'POST',
+    body: { kind: 'dispatch', mode: 'queue', tasks: [{ target: 'lead', text: '汇总进度' }] },
+  })
+  assert.equal(result.ok, true)
+  assert.equal(result.results.length, 1)
+  assert.equal(result.results[0].sessionId, 'session-lead')
+  const prompt = h.prompts.at(-1)
+  assert.equal(prompt.sessionId, 'session-lead')
+  assert.match(prompt.content[0].text, /汇总进度/)
 })
 
 test('未知操作返回错误而不是抛出面板路由', async () => {
