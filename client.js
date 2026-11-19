@@ -50,6 +50,13 @@ window.__ModuleLoader__.load({
       dispatchAll: '派给全部',
       dispatchTab: '派活',
       modeMessage: '消息',
+      menuMore: '更多操作',
+      chatMenu: '会话操作',
+      panelCollapse: '收起',
+      panelExpand: '任务与汇报',
+      msgSystem: '系统上下文',
+      composeHint: 'Enter 发送 · Shift+Enter 换行 · 「派活」会记入任务台账',
+      enterText: '先输入内容',
       sessionRename: '重命名会话',
       sessionArchive: '归档会话',
       chatRefresh: '刷新对话',
@@ -209,6 +216,13 @@ window.__ModuleLoader__.load({
       dispatchAll: 'Dispatch to all',
       dispatchTab: 'Dispatch',
       modeMessage: 'Message',
+      menuMore: 'More',
+      chatMenu: 'Session',
+      panelCollapse: 'Hide',
+      panelExpand: 'Tasks & reports',
+      msgSystem: 'System context',
+      composeHint: 'Enter sends · Shift+Enter newline · Dispatch is recorded as a task',
+      enterText: 'Type something first',
       sessionRename: 'Rename session',
       sessionArchive: 'Archive session',
       chatRefresh: 'Refresh chat',
@@ -396,28 +410,63 @@ window.__ModuleLoader__.load({
 .stm-tab{border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-secondary);border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer}
 .stm-tab-on{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l2)}
 .stm-more{margin-top:8px}
-.stm-workbench{overflow:hidden!important}
-.stm-workbench .stm-wrap{max-width:none;height:100%;gap:10px}
-.stm-work{display:flex;gap:10px;flex:1;min-height:0}
-.stm-modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:70;background:rgba(0,0,0,.35)}
-.stm-modal-body{width:760px;max-width:94vw;max-height:86vh;overflow:auto;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
-.stm-rail{width:228px;flex:0 0 228px;min-height:0;display:flex;flex-direction:column;border:1px solid var(--dsw-alias-border-l1);border-radius:12px;background:var(--dsw-alias-bg-layer-1);overflow:hidden}
-.stm-rail-head{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-bottom:1px solid var(--dsw-alias-border-l1);font-size:12px;color:var(--dsw-alias-label-secondary)}
+/* —— 工作台 —— */
+.stm-workbench{overflow:hidden!important;background:var(--dsw-alias-bg-base)}
+.stm-workbench .stm-wrap{max-width:none;height:100%;gap:12px}
+.stm-topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:2px 2px 0}
+.stm-topbar-left{display:flex;flex-direction:column;gap:3px;min-width:0}
+.stm-topbar-title{font-size:19px;font-weight:650;color:var(--dsw-alias-label-primary);line-height:1.25}
+.stm-topbar-meta{font-size:12px;color:var(--dsw-alias-label-secondary);display:flex;gap:10px;flex-wrap:wrap}
+.stm-topbar-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.stm-icon-btn{border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);color:var(--dsw-alias-label-secondary);border-radius:8px;height:28px;min-width:28px;padding:0 8px;font-size:13px;line-height:1;cursor:pointer}
+.stm-icon-btn:hover{color:var(--dsw-alias-label-primary)}
+.stm-menu-wrap{position:relative}
+.stm-menu{position:absolute;right:0;top:32px;z-index:80;min-width:180px;background:var(--dsw-alias-bg-layer-1);border:1px solid var(--dsw-alias-border-l1);border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,.22);padding:5px;display:flex;flex-direction:column}
+.stm-menu-item{text-align:left;border:0;background:transparent;color:var(--dsw-alias-label-primary);border-radius:7px;padding:7px 10px;font-size:13px;cursor:pointer}
+.stm-menu-item:hover{background:var(--dsw-alias-bg-layer-2)}
+.stm-menu-danger{color:var(--dsw-alias-label-error, #d9534f)}
+.stm-work{display:flex;gap:12px;flex:1;min-height:0}
+.stm-rail{width:212px;flex:0 0 212px;min-height:0;display:flex;flex-direction:column;border:1px solid var(--dsw-alias-border-l1);border-radius:14px;background:var(--dsw-alias-bg-layer-1);overflow:hidden}
+.stm-rail-head{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-bottom:1px solid var(--dsw-alias-border-l1);font-size:12px;color:var(--dsw-alias-label-secondary)}
 .stm-rail-list{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
-.stm-rail-item{width:100%;text-align:left;border:0;background:transparent;border-bottom:1px solid var(--dsw-alias-border-l1);padding:8px 10px;cursor:pointer;color:var(--dsw-alias-label-primary);display:flex;flex-direction:column;gap:3px}
+.stm-rail-item{width:100%;text-align:left;border:0;background:transparent;border-bottom:1px solid var(--dsw-alias-border-l1);padding:8px 10px;cursor:pointer;color:var(--dsw-alias-label-primary);display:flex;gap:8px;align-items:flex-start}
 .stm-rail-item:hover{background:var(--dsw-alias-bg-layer-2)}
 .stm-rail-item-on{background:var(--dsw-alias-bg-layer-2);box-shadow:inset 2px 0 0 var(--dsw-alias-brand-primary,var(--dsw-alias-label-primary))}
+.stm-rail-main{min-width:0;display:flex;flex-direction:column;gap:2px;flex:1}
 .stm-rail-name{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;min-width:0}
 .stm-rail-name span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.stm-rail-sub{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--dsw-alias-label-secondary);min-width:0}
-.stm-chat{flex:1;min-width:0;display:flex;flex-direction:column;border:1px solid var(--dsw-alias-border-l1);border-radius:12px;background:var(--dsw-alias-bg-layer-1);overflow:hidden}
-.stm-chat-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-bottom:1px solid var(--dsw-alias-border-l1);flex-wrap:wrap}
-.stm-chat-body{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:10px 14px;display:flex;flex-direction:column;gap:8px}
-.stm-chat-foot{border-top:1px solid var(--dsw-alias-border-l1);padding:8px 12px;display:flex;flex-direction:column;gap:6px}
-.stm-live{border:1px dashed var(--dsw-alias-border-l2);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--dsw-alias-label-secondary);white-space:pre-wrap;max-height:220px;overflow-y:auto}
-.stm-side{width:340px;flex:0 0 340px;min-height:0;display:flex;flex-direction:column;border:1px solid var(--dsw-alias-border-l1);border-radius:12px;background:var(--dsw-alias-bg-layer-1);overflow:hidden}
-.stm-side-tabs{display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid var(--dsw-alias-border-l1);flex-wrap:wrap}
-.stm-side-body{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.stm-rail-sub{font-size:11px;color:var(--dsw-alias-label-secondary);display:flex;gap:6px;flex-wrap:wrap}
+.stm-rail-badge{font-size:10px;font-weight:600;border-radius:999px;padding:0 6px;line-height:16px;background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-bg-layer-2));color:var(--dsw-alias-label-secondary)}
+.stm-chat{flex:1;min-width:0;display:flex;flex-direction:column;border:1px solid var(--dsw-alias-border-l1);border-radius:14px;background:var(--dsw-alias-bg-layer-1);overflow:hidden}
+.stm-chat-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.stm-chat-head-id{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
+.stm-chat-head-id strong{font-size:14px}
+.stm-chat-body{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+.stm-chat-foot{border-top:1px solid var(--dsw-alias-border-l1);padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px;background:var(--dsw-alias-bg-layer-1)}
+.stm-compose{display:flex;flex-direction:column;gap:8px}
+.stm-seg{display:inline-flex;border:1px solid var(--dsw-alias-border-l1);border-radius:8px;overflow:hidden}
+.stm-seg button{border:0;background:transparent;color:var(--dsw-alias-label-secondary);font-size:12px;padding:5px 12px;cursor:pointer}
+.stm-seg-on{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);font-weight:600}
+.stm-compose-hint{font-size:11px;color:var(--dsw-alias-label-secondary)}
+.stm-live{border:1px solid var(--dsw-alias-border-l2);border-radius:10px;padding:10px 12px;background:var(--dsw-alias-bg-layer-2,transparent);font-size:13px;color:var(--dsw-alias-label-primary);white-space:pre-wrap;max-height:240px;overflow-y:auto;scrollbar-width:thin}
+.stm-side{width:336px;flex:0 0 336px;min-height:0;display:flex;flex-direction:column;border:1px solid var(--dsw-alias-border-l1);border-radius:14px;background:var(--dsw-alias-bg-layer-1);overflow:hidden}
+.stm-side-rail{width:38px;flex:0 0 38px;border:1px solid var(--dsw-alias-border-l1);border-radius:14px;background:var(--dsw-alias-bg-layer-1);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:14px;cursor:pointer;color:var(--dsw-alias-label-secondary)}
+.stm-side-rail span{writing-mode:vertical-rl;font-size:11px;letter-spacing:.08em}
+.stm-side-tabs{display:flex;gap:4px;padding:8px 10px;border-bottom:1px solid var(--dsw-alias-border-l1);flex-wrap:wrap;align-items:center}
+.stm-side-body{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
+.stm-item{border:1px solid var(--dsw-alias-border-l1);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:5px;font-size:12px}
+.stm-item-head{display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:var(--dsw-alias-label-secondary)}
+.stm-item-subject{font-weight:600;color:var(--dsw-alias-label-primary);font-size:12.5px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.stm-item-body{color:var(--dsw-alias-label-secondary);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap}
+.stm-item-body-open{-webkit-line-clamp:initial}
+.stm-msg{display:flex;flex-direction:column;gap:4px;font-size:13px;line-height:1.7}
+.stm-msg-user{background:var(--dsw-alias-bg-layer-2,transparent);border:1px solid var(--dsw-alias-border-l1);border-radius:12px;padding:10px 12px}
+.stm-msg-system{border:1px dashed var(--dsw-alias-border-l2);border-radius:10px;padding:8px 10px;color:var(--dsw-alias-label-secondary);font-size:12px}
+.stm-msg-role{font-size:11px;font-weight:600;color:var(--dsw-alias-label-secondary);display:flex;gap:8px;align-items:center}
+.stm-msg-text{color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word}
+.stm-msg-clamp{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.stm-msg-tools{font-size:11px;color:var(--dsw-alias-label-secondary);display:flex;gap:6px;flex-wrap:wrap}
+.stm-msg-tool{font-family:var(--dsw-alias-font-mono, monospace);font-size:11.5px;color:var(--dsw-alias-label-secondary);border-left:2px solid var(--dsw-alias-border-l2);padding:3px 8px;white-space:pre-wrap;word-break:break-all;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .stm-drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:92vw;background:var(--dsw-alias-bg-layer-1);border-left:1px solid var(--dsw-alias-border-l1);box-shadow:-12px 0 32px rgba(0,0,0,.18);z-index:60;display:flex;flex-direction:column;animation:stm-slide-in .18s ease-out}
 @keyframes stm-slide-in{from{transform:translateX(100%)}to{transform:translateX(0)}}
 .stm-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--dsw-alias-border-l1)}
@@ -1562,10 +1611,32 @@ window.__ModuleLoader__.load({
       )
     }
 
+    /** 把小菜单：次要操作收进 ⋯，主按钮保持克制。 */
+    function MenuButton({ title, items }) {
+      const [open, setOpen] = useState(false)
+      useEffect(() => {
+        if (!open) return undefined
+        const close = () => setOpen(false)
+        window.addEventListener('click', close)
+        return () => window.removeEventListener('click', close)
+      }, [open])
+      const visible = (items ?? []).filter(item => item !== null && item !== undefined)
+      if (visible.length === 0) return null
+      return h('div', { className: 'stm-menu-wrap', onClick: event => event.stopPropagation() },
+        h('button', { className: 'stm-icon-btn', title, onClick: () => setOpen(!open) }, '⋯'),
+        open
+          ? h('div', { className: 'stm-menu' }, visible.map(item => h('button', {
+            key: item.label,
+            className: `stm-menu-item${item.danger === true ? ' stm-menu-danger' : ''}`,
+            onClick: () => { setOpen(false); item.onClick() }
+          }, item.label)))
+          : null
+      )
+    }
+
     /** 左侧角色栏：一屏看到所有角色状态，点一下切换对话。 */
-    function MemberRail({ state, selectedId, onSelect, onAdd, adding, onNotice }) {
-      const team = state?.team
-      const members = team?.members ?? []
+    function MemberRail({ state, selectedId, onSelect, onAdd, adding }) {
+      const members = state?.team?.members ?? []
       return h('div', { className: 'stm-rail' },
         h('div', { className: 'stm-rail-head' },
           h('span', null, `${t('railTitle')} ${members.length}`),
@@ -1575,7 +1646,6 @@ window.__ModuleLoader__.load({
           members.map(member => {
             const status = statusOf(member)
             const chips = []
-            if (member.lead) chips.push(t('lead'))
             if (member.role) chips.push(member.role)
             chips.push(`${t('stage')} ${member.stage}`)
             return h('button', {
@@ -1583,32 +1653,66 @@ window.__ModuleLoader__.load({
               className: `stm-rail-item${member.sessionId === selectedId ? ' stm-rail-item-on' : ''}`,
               onClick: () => onSelect(member.sessionId)
             },
-              h('div', { className: 'stm-rail-name' },
-                h('span', { className: `stm-dot stm-dot-${status.kind}` }),
-                h('span', null, member.name),
-                member.unread > 0 ? h('span', { className: 'stm-chip' }, `${member.unread}`) : null
+              h('span', { className: `stm-dot stm-dot-${status.kind}`, style: { marginTop: '5px' } }),
+              h('div', { className: 'stm-rail-main' },
+                h('div', { className: 'stm-rail-name' },
+                  h('span', null, member.name),
+                  member.lead ? h('span', { className: 'stm-rail-badge' }, t('lead')) : null
+                ),
+                h('div', { className: 'stm-rail-sub' },
+                  h('span', null, status.label),
+                  chips.length === 0 ? null : h('span', null, chips.join(' · '))
+                )
               ),
-              h('div', { className: 'stm-rail-sub' },
-                h('span', null, status.label),
-                chips.length === 0 ? null : h('span', null, `· ${chips.join(' · ')}`)
-              )
+              member.unread > 0 ? h('span', { className: 'stm-rail-badge' }, `${member.unread}`) : null
             )
           })
         )
       )
     }
 
-    /** 中间对话区：看历史 + 实时流式输出 + 发消息/派活/中断。 */
+    /** 一条对话消息：系统上下文、长文本折叠、工具调用单独样式。 */
+    function MessageRow({ message, expanded, onToggle }) {
+      const long = message.text !== undefined && message.text.length > 600
+      const isSystem = message.role === 'user' && message.text !== undefined && message.text.includes('<system-reminder>')
+      if (message.role === 'tool') {
+        return h('div', { className: 'stm-msg-tool' }, message.text)
+      }
+      const roles = message.role === 'user'
+        ? (isSystem ? t('msgSystem') : t('user'))
+        : 'Assistant'
+      return h('div', { className: `stm-msg${message.role === 'user' && !isSystem ? ' stm-msg-user' : ''}${isSystem ? ' stm-msg-system' : ''}` },
+        h('div', { className: 'stm-msg-role' },
+          h('span', null, roles),
+          message.time > 0 ? h('span', null, new Date(message.time).toLocaleTimeString('zh-CN', { hour12: false })) : null
+        ),
+        h('div', {
+          className: `stm-msg-text${long && expanded !== true ? ' stm-msg-clamp' : ''}`,
+          onClick: long ? onToggle : undefined,
+          style: long ? { cursor: 'pointer' } : undefined
+        }, message.text),
+        long
+          ? h('button', { className: 'stm-tab', style: { alignSelf: 'flex-start' }, onClick: onToggle }, expanded ? t('collapseBody') : t('expand'))
+          : null,
+        message.tools !== undefined && message.tools.length > 0
+          ? h('div', { className: 'stm-msg-tools' },
+            h('span', null, `${t('tools')}:`),
+            message.tools.map(tool => h('span', { key: tool, className: 'stm-chip' }, tool))
+          )
+          : null
+      )
+    }
+
+    /** 中间对话区：历史 + 实时流式输出 + 发消息/派活/中断。 */
     function ConversationPane({ state, sessionId, draft, onDraft, onNotice, openSession }) {
-      const team = state?.team
-      const member = (team?.members ?? []).find(candidate => candidate.sessionId === sessionId) ?? null
+      const member = (state?.team?.members ?? []).find(candidate => candidate.sessionId === sessionId) ?? null
       const [transcript, setTranscript] = useState(null)
       const [live, setLive] = useState(null)
       const [error, setError] = useState('')
       const [loading, setLoading] = useState(false)
       const [busy, setBusy] = useState('')
       const [mode, setMode] = useState('message')
-      const [sendMode, setSendMode] = useState('queue')
+      const [expanded, setExpanded] = useState(() => new Set())
       const scrollRef = useRef(null)
       const runningRef = useRef(false)
       const lastSeq = transcript?.messages?.length
@@ -1620,9 +1724,8 @@ window.__ModuleLoader__.load({
         if (quiet !== true) setLoading(true)
         try {
           const payload = await fetchTranscript(sessionId, 40)
-          if (payload.ok === false) {
-            setError(payload.error ?? 'unknown')
-          } else {
+          if (payload.ok === false) setError(payload.error ?? 'unknown')
+          else {
             setError('')
             setTranscript(payload)
           }
@@ -1633,18 +1736,17 @@ window.__ModuleLoader__.load({
         }
       }
 
-      // 切换角色：换 watch、读历史
       useEffect(() => {
         if (sessionId === '') return undefined
         setTranscript(null)
         setLive(null)
         setError('')
+        setExpanded(new Set())
         loadTranscript()
         actRaw({ kind: 'watch', sessionId })
         return () => { actRaw({ kind: 'unwatch', sessionId }) }
       }, [sessionId])
 
-      // 实时轮询：状态 + 流式文本
       useEffect(() => {
         if (sessionId === '') return undefined
         let stopped = false
@@ -1671,33 +1773,47 @@ window.__ModuleLoader__.load({
         if (element !== null && element !== undefined) element.scrollTop = element.scrollHeight
       }, [lastSeq, live?.streamText?.length])
 
-      async function send(steer, all) {
+      async function send(steer) {
         const text = draft.trim()
         if (text === '') return
-        setBusy(steer ? 'steer' : 'send')
-        let result
-        if (mode === 'dispatch' || all === true) {
-          result = await act(withTeam(state, {
+        setBusy('send')
+        const result = mode === 'dispatch'
+          ? await act(withTeam(state, {
             kind: 'dispatch',
             mode: steer ? 'steer' : 'queue',
-            tasks: [{ target: all === true ? 'all' : sessionId, text }]
+            tasks: [{ target: sessionId, text }]
           }))
-        } else {
-          result = await actRaw({ kind: 'message', sessionId, text, mode: steer ? 'steer' : 'queue' })
-        }
+          : await actRaw({ kind: 'message', sessionId, text, mode: steer ? 'steer' : 'queue' })
         setBusy('')
         if (result === null || result === undefined || result.ok === false) {
           onNotice(`${t('failed')}: ${result?.error?.message ?? result?.error ?? 'unknown'}`)
           return
         }
         onDraft('')
-        if (mode === 'dispatch' || all === true) {
+        if (mode === 'dispatch') {
           const failed = (result.results ?? []).filter(item => !item.ok)
           onNotice(failed.length > 0
             ? `${t('failed')}: ${failed.map(item => `${item.name} ${item.error}`).join('; ')}`
             : `${t('done')}: ${(result.results ?? []).map(item => item.name).join(', ')}`)
         }
         loadTranscript(true)
+      }
+
+      async function dispatchAll() {
+        const text = draft.trim()
+        if (text === '') {
+          onNotice(`${t('failed')}: ${t('enterText')}`)
+          return
+        }
+        setBusy('send')
+        const result = await act(withTeam(state, { kind: 'dispatch', mode: 'queue', tasks: [{ target: 'all', text }] }))
+        setBusy('')
+        if (result.ok === false) {
+          onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+          return
+        }
+        onDraft('')
+        onNotice(`${t('done')}: ${(result.results ?? []).map(item => item.name).join(', ')}`)
       }
 
       async function interrupt() {
@@ -1711,6 +1827,29 @@ window.__ModuleLoader__.load({
         }
       }
 
+      async function renameSession(name) {
+        const title = typeof window.prompt === 'function' ? window.prompt(t('sessionRename'), name) : ''
+        if (typeof title !== 'string' || title.trim() === '') return
+        const result = await act({ kind: 'rename-session', sessionId, title: title.trim() })
+        if (result.ok === false) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+      }
+
+      async function archiveSession() {
+        if (typeof window.confirm === 'function' && !window.confirm(t('sessionArchive'))) return
+        const result = await act({ kind: 'archive-session', sessionId })
+        if (result.ok === false) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+        else onNotice(`${t('done')}: ${t('sessionArchive')}`)
+      }
+
+      function toggleMessage(key) {
+        setExpanded(previous => {
+          const next = new Set(previous)
+          if (next.has(key)) next.delete(key)
+          else next.add(key)
+          return next
+        })
+      }
+
       if (member === null) {
         return h('div', { className: 'stm-chat' }, h('div', { className: 'stm-empty' }, t('chatEmpty')))
       }
@@ -1718,14 +1857,16 @@ window.__ModuleLoader__.load({
       const running = live?.running === true || member.running === true
       const status = statusOf(member)
       const chips = []
-      if (member.lead) chips.push(t('lead'))
       if (member.role) chips.push(member.role)
       chips.push(`${t('stage')} ${member.stage}`)
-      if (member.model !== null && member.model !== undefined) chips.push(`${member.model.model}${member.model.reasoningEffort ? ` · ${member.model.reasoningEffort}` : ''}`)
+      if (member.model !== null && member.model !== undefined) {
+        chips.push(`${member.model.model}${member.model.reasoningEffort ? ` · ${member.model.reasoningEffort}` : ''}`)
+      }
+      if (member.lead) chips.push(t('lead'))
 
       return h('div', { className: 'stm-chat' },
         h('div', { className: 'stm-chat-head' },
-          h('div', { className: 'stm-inline', style: { gap: '8px', flexWrap: 'wrap' } },
+          h('div', { className: 'stm-chat-head-id' },
             h('span', { className: `stm-dot stm-dot-${status.kind}` }),
             h('strong', null, member.name),
             chips.map(chip => h('span', { className: 'stm-chip', key: chip }, chip)),
@@ -1734,20 +1875,16 @@ window.__ModuleLoader__.load({
               : null
           ),
           h('div', { className: 'stm-inline' },
-            h(Button, { ghost: true, onClick: () => loadTranscript() }, t('chatRefresh')),
-            h(Button, { ghost: true, onClick: async () => {
-              const title = typeof window.prompt === 'function' ? window.prompt(t('sessionRename'), member.name) : ''
-              if (typeof title !== 'string' || title.trim() === '') return
-              const result = await act({ kind: 'rename-session', sessionId, title: title.trim() })
-              if (result.ok === false) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
-            } }, t('sessionRename')),
-            h(Button, { ghost: true, onClick: async () => {
-              if (typeof window.confirm === 'function' && !window.confirm(t('sessionArchive'))) return
-              const result = await act({ kind: 'archive-session', sessionId })
-              if (result.ok === false) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
-              else onNotice(`${t('done')}: ${t('sessionArchive')}`)
-            } }, t('sessionArchive')),
-            h(Button, { ghost: true, onClick: () => { if (openSession) openSession(sessionId) } }, t('drawerOpenChat'))
+            h(Button, { ghost: true, onClick: () => { if (openSession) openSession(sessionId) } }, t('drawerOpenChat')),
+            h(MenuButton, {
+              title: t('chatMenu'),
+              items: [
+                { label: t('chatRefresh'), onClick: () => loadTranscript() },
+                { label: t('sessionRename'), onClick: () => renameSession(member.name) },
+                { label: t('sessionArchive'), onClick: archiveSession },
+                { label: t('dispatchAll'), onClick: dispatchAll }
+              ]
+            })
           )
         ),
         h('div', { className: 'stm-chat-body', ref: scrollRef },
@@ -1756,61 +1893,67 @@ window.__ModuleLoader__.load({
             ? h('div', { className: 'stm-empty' }, loading ? t('drawerLoading') : t('chatEmpty'))
             : transcript.messages.length === 0
               ? h('div', { className: 'stm-empty' }, t('chatEmpty'))
-              : transcript.messages.map(message => h('div', { key: message.seq, className: `stm-msg stm-msg-${message.role}` },
-                h('div', { className: 'stm-msg-role' },
-                  `${message.role === 'user' ? t('user') : message.role === 'assistant' ? 'Assistant' : 'Tool'}`,
-                  message.time > 0 ? ` · ${new Date(message.time).toLocaleTimeString('zh-CN', { hour12: false })}` : ''),
-                h('div', { className: 'stm-msg-text' }, message.text),
-                message.tools !== undefined && message.tools.length > 0
-                  ? h('div', { className: 'stm-msg-tools' }, `${t('tools')}: ${message.tools.join(', ')}`)
-                  : null
-              )),
+              : transcript.messages.map((message, index) => {
+                const key = message.seq
+                return h(MessageRow, {
+                  key,
+                  message,
+                  expanded: expanded.has(key),
+                  onToggle: () => toggleMessage(key)
+                })
+              }),
           running
             ? h('div', { className: 'stm-live' },
               h('div', { className: 'stm-msg-role' }, t('liveRunning')),
               h('div', null, live?.streamText === undefined || live?.streamText === '' ? '…' : live.streamText),
               live?.tools !== undefined && live.tools.length > 0
-                ? h('div', { className: 'stm-msg-tools' }, `${t('liveTools')}: ${live.tools.join(', ')}`)
+                ? h('div', { className: 'stm-msg-tools' },
+                  h('span', null, `${t('liveTools')}:`),
+                  live.tools.map(tool => h('span', { key: tool, className: 'stm-chip' }, tool))
+                )
                 : null
             )
             : null
         ),
         h('div', { className: 'stm-chat-foot' },
-          h('textarea', {
-            className: 'stm-textarea',
-            value: draft,
-            placeholder: t('chatPlaceholder'),
-            onChange: event => onDraft(event.target.value),
-            onKeyDown: event => {
-              if (event.key === 'Enter' && event.shiftKey !== true) {
-                event.preventDefault()
-                send(event.ctrlKey === true)
+          h('div', { className: 'stm-compose' },
+            h('textarea', {
+              className: 'stm-textarea',
+              value: draft,
+              placeholder: t('chatPlaceholder'),
+              onChange: event => onDraft(event.target.value),
+              onKeyDown: event => {
+                if (event.key === 'Enter' && event.shiftKey !== true) {
+                  event.preventDefault()
+                  send(event.ctrlKey === true)
+                }
               }
-            }
-          }),
-          h('div', { className: 'stm-inline', style: { justifyContent: 'space-between', flexWrap: 'wrap' } },
-            h('div', { className: 'stm-inline' },
-              h('select', { className: 'stm-select', value: mode, style: { width: '110px' },
-                onChange: event => setMode(event.target.value) },
-                h('option', { value: 'message', key: 'message' }, t('modeMessage')),
-                h('option', { value: 'dispatch', key: 'dispatch' }, t('dispatchTab'))
+            }),
+            h('div', { className: 'stm-inline', style: { justifyContent: 'space-between', flexWrap: 'wrap' } },
+              h('div', { className: 'stm-inline' },
+                h('div', { className: 'stm-seg' },
+                  h('button', { className: mode === 'message' ? 'stm-seg-on' : '', onClick: () => setMode('message') }, t('modeMessage')),
+                  h('button', { className: mode === 'dispatch' ? 'stm-seg-on' : '', onClick: () => setMode('dispatch') }, t('dispatchTab'))
+                ),
+                running
+                  ? h(Button, { ghost: true, onClick: () => send(true), disabled: busy !== '' }, t('sendSteer'))
+                  : null
               ),
-              running
-                ? h(Button, { ghost: true, onClick: () => send(true), disabled: busy !== '' }, t('sendSteer'))
-                : null
+              h('div', { className: 'stm-inline' },
+                running
+                  ? h(Button, { ghost: true, onClick: interrupt, disabled: busy !== '' }, busy === 'cancel' ? '…' : t('interrupt'))
+                  : null,
+                h(Button, { primary: true, onClick: () => send(false), disabled: busy !== '' || draft.trim() === '' }, busy === 'send' ? '…' : t('sendQueue'))
+              )
             ),
-            h('div', { className: 'stm-inline' },
-              running ? h(Button, { ghost: true, onClick: interrupt, disabled: busy !== '' }, busy === 'cancel' ? '…' : t('interrupt')) : null,
-              h(Button, { ghost: true, onClick: () => send(false, true), disabled: busy !== '' || draft.trim() === '' }, t('dispatchAll')),
-              h(Button, { primary: true, onClick: () => send(false), disabled: busy !== '' || draft.trim() === '' }, busy === 'send' ? '…' : t('sendQueue'))
-            )
+            h('div', { className: 'stm-compose-hint' }, t('composeHint'))
           )
         )
       )
     }
 
-    /** 右侧工作区：任务 / 汇报 / 通知 / 派活。 */
-    function SidePanel({ state, onNotice, onReply }) {
+    /** 右侧工作区：可收起；任务 / 汇报 / 通知 / 派活。 */
+    function SidePanel({ state, onNotice, onReply, open, onToggle, openSession }) {
       const team = state?.team ?? {}
       const tasks = team.tasks ?? []
       const reports = team.reports ?? []
@@ -1821,6 +1964,7 @@ window.__ModuleLoader__.load({
 
       const openTasks = tasks.filter(task => task.state === 'dispatched' || task.state === 'paused')
       const unread = reports.filter(report => !report.delivered)
+      const pendingNotices = notices.filter(item => !item.delivered)
 
       async function recover(task) {
         setBusy(task.id)
@@ -1830,12 +1974,33 @@ window.__ModuleLoader__.load({
         else onNotice(t('done'))
       }
 
+      if (open !== true) {
+        return h('div', {
+          className: 'stm-side-rail',
+          onClick: onToggle,
+          title: t('panelExpand')
+        },
+          h('span', null, `${t('tasks')} ${openTasks.length}`),
+          h('span', null, `${t('reports')} ${unread.length}`),
+          h('span', null, '‹')
+        )
+      }
+
+      const tabs = [
+        { id: 'tasks', label: `${t('tasks')} ${openTasks.length}` },
+        { id: 'reports', label: `${t('reports')} ${unread.length}` },
+        { id: 'notices', label: `${t('noticeTab')} ${pendingNotices.length}` },
+        { id: 'dispatch', label: t('dispatchTab') }
+      ]
+
       return h('div', { className: 'stm-side' },
         h('div', { className: 'stm-side-tabs' },
-          h('button', { className: `stm-tab${tab === 'tasks' ? ' stm-tab-on' : ''}`, onClick: () => setTab('tasks') }, `${t('tasks')} ${openTasks.length}`),
-          h('button', { className: `stm-tab${tab === 'reports' ? ' stm-tab-on' : ''}`, onClick: () => setTab('reports') }, `${t('reports')} ${unread.length}`),
-          h('button', { className: `stm-tab${tab === 'notices' ? ' stm-tab-on' : ''}`, onClick: () => setTab('notices') }, `${t('noticeTab')} ${notices.filter(item => !item.delivered).length}`),
-          h('button', { className: `stm-tab${tab === 'dispatch' ? ' stm-tab-on' : ''}`, onClick: () => setTab('dispatch') }, t('dispatchTab'))
+          tabs.map(item => h('button', {
+            key: item.id,
+            className: `stm-tab${tab === item.id ? ' stm-tab-on' : ''}`,
+            onClick: () => setTab(item.id)
+          }, item.label)),
+          h('div', { style: { marginLeft: 'auto' } }, h(Button, { ghost: true, onClick: onToggle }, t('panelCollapse')))
         ),
         h('div', { className: 'stm-side-body' },
           tab === 'tasks'
@@ -1843,16 +2008,17 @@ window.__ModuleLoader__.load({
               ? h('div', { className: 'stm-empty' }, t('noOpenTasks'))
               : openTasks.slice().reverse().slice(0, 12).map(task => {
                 const status = taskStateOf(task)
-                return h('div', { className: 'stm-report', key: task.id },
-                  h('div', { className: 'stm-report-head' },
-                    h('span', { className: 'stm-report-subject' }, task.subject),
+                return h('div', { className: 'stm-item', key: task.id },
+                  h('div', { className: 'stm-item-head' },
                     h('span', { className: `stm-chip${status.kind === 'stale' ? ' stm-chip-warn' : ''}` }, status.label),
                     h('span', null, task.name)
                   ),
-                  h('div', { className: 'stm-inline', style: { marginTop: '4px' } },
+                  h('div', { className: 'stm-item-subject' }, task.subject),
+                  h('div', { className: 'stm-inline' },
                     task.stale === true
                       ? h(Button, { ghost: true, onClick: () => recover(task), disabled: busy === task.id }, busy === task.id ? '…' : t('recover'))
-                      : h(Button, { ghost: true, onClick: () => onReply(task.sessionId, task.subject) }, t('reply'))
+                      : null,
+                    h(Button, { ghost: true, onClick: () => onReply(task.sessionId, task.subject) }, t('reply'))
                   )
                 )
               }))
@@ -1862,14 +2028,14 @@ window.__ModuleLoader__.load({
                 : unread.slice().reverse().slice(0, 12).map((report, index) => {
                   const key = `${report.createdAt}-${index}`
                   const isOpen = expanded.has(key)
-                  return h('div', { className: 'stm-report', key },
-                    h('div', { className: 'stm-report-head' },
-                      h('span', { className: 'stm-report-subject' }, report.subject),
+                  return h('div', { className: 'stm-item', key },
+                    h('div', { className: 'stm-item-head' },
                       h('span', { className: 'stm-chip' }, report.state),
                       h('span', null, `${report.from}${report.role ? `（${report.role}）` : ''}`)
                     ),
+                    h('div', { className: 'stm-item-subject' }, report.subject),
                     h('div', {
-                      className: `stm-report-body${isOpen ? '' : ' stm-report-body-clamp'}`,
+                      className: `stm-item-body${isOpen ? ' stm-item-body-open' : ''}`,
                       style: { cursor: 'pointer' },
                       onClick: () => setExpanded(previous => {
                         const next = new Set(previous)
@@ -1886,12 +2052,12 @@ window.__ModuleLoader__.load({
               : tab === 'notices'
                 ? (notices.length === 0
                   ? h('div', { className: 'stm-empty' }, t('noNotices'))
-                  : notices.slice().reverse().slice(0, 10).map((notice, index) => h('div', { className: 'stm-report', key: index },
-                    h('div', { className: 'stm-report-head' },
-                      h('span', { className: 'stm-report-subject' }, notice.delivered ? t('delivered') : t('queued')),
+                  : notices.slice().reverse().slice(0, 10).map((notice, index) => h('div', { className: 'stm-item', key: index },
+                    h('div', { className: 'stm-item-head' },
+                      h('span', { className: 'stm-chip' }, notice.delivered ? t('delivered') : t('queued')),
                       h('span', null, notice.createdAt === undefined ? '' : new Date(notice.createdAt).toLocaleTimeString('zh-CN', { hour12: false }))
                     ),
-                    h('div', { className: 'stm-report-body' }, notice.text)
+                    h('div', { className: 'stm-item-body stm-item-body-open' }, notice.text)
                   )))
                 : h(DispatchBox, { state, onNotice })
         )
@@ -1904,6 +2070,9 @@ window.__ModuleLoader__.load({
       const [busy, setBusy] = useState(false)
       const [draft, setDraft] = useState('')
       const [selectedId, setSelectedId] = useState('')
+      const [panelOpen, setPanelOpen] = useState(() => {
+        try { return window.localStorage.getItem('session-team:panel') !== '0' } catch { return true }
+      })
       const team = state?.team
 
       const effectiveId = team === undefined || team === null
@@ -1927,6 +2096,10 @@ window.__ModuleLoader__.load({
         try { window.localStorage.setItem(`session-team:role:${team.id}`, effectiveId) } catch { /* 忽略 */ }
       }, [effectiveId])
 
+      useEffect(() => {
+        try { window.localStorage.setItem('session-team:panel', panelOpen ? '1' : '0') } catch { /* 忽略 */ }
+      }, [panelOpen])
+
       if (!team) {
         return h('div', { className: 'stm-page' },
           h('div', { className: 'stm-wrap' },
@@ -1949,62 +2122,57 @@ window.__ModuleLoader__.load({
 
       return h('div', { className: 'stm-page stm-workbench' },
         h('div', { className: 'stm-wrap' },
-          h('div', { className: 'stm-head' },
-            h('div', null,
-              h('h1', { className: 'stm-title' }, team.name),
-              h('p', { className: 'stm-sub' },
+          h('div', { className: 'stm-topbar' },
+            h('div', { className: 'stm-topbar-left' },
+              h('h1', { className: 'stm-topbar-title' }, team.name),
+              h('div', { className: 'stm-topbar-meta' },
                 h('span', { title: t('tipMembers') }, `${t('members')} ${team.members.length}`),
-                ' · ',
                 h('span', { title: t('tipOpenTasks') }, `${t('openTasks')} ${team.openTasks}`),
-                ' · ',
                 h('span', { title: t('tipPending') }, `${t('pending')} ${team.pendingReports}`),
                 team.pendingNotices > 0
-                  ? h('span', { title: t('tipNotices') }, ` · ${t('noticesPending')} ${team.pendingNotices}`)
+                  ? h('span', { title: t('tipNotices') }, `${t('noticesPending')} ${team.pendingNotices}`)
                   : null,
-                leadMember
-                  ? h('span', { title: t('tipLead') }, ` · ${t('lead')}: ${leadMember.name}`)
-                  : null,
-                state?.models?.default
-                  ? h('span', { title: t('tipDefault') }, ` · ${t('defaultModel', { name: state.models.default.model })}`)
-                  : null
+                leadMember ? h('span', { title: t('tipLead') }, `${t('lead')}: ${leadMember.name}`) : null
               )
             ),
-            h('div', { className: 'stm-actions' },
-              h(Button, { onClick: onBack, title: t('tipBack') }, t('back')),
-              h(Button, { onClick: () => refresh(), disabled: false, title: t('tipRefresh') }, t('refresh')),
-              h(Button, { onClick: () => run({ kind: 'flush' }, `${t('done')}: ${t('flush')}`), disabled: busy || !team.lead, title: t('tipFlush') }, t('flush')),
-              h(Button, { onClick: () => run({ kind: 'brief-lead' }, `${t('done')}: ${t('briefing')}`), disabled: busy || !team.lead, title: t('tipBrief') }, t('briefing')),
-              h(Button, {
-                onClick: () => {
-                  setBusy(true)
-                  act(withTeam(state, { kind: 'attach-workspace' })).then(result => {
-                    setBusy(false)
-                    if (!result.ok) {
-                      onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
-                      return
+            h('div', { className: 'stm-topbar-actions' },
+              h(Button, { ghost: true, onClick: onBack, title: t('tipBack') }, t('back')),
+              h(MenuButton, {
+                title: t('menuMore'),
+                items: [
+                  { label: t('refresh'), onClick: () => refresh() },
+                  { label: t('flush'), onClick: () => run({ kind: 'flush' }, `${t('done')}: ${t('flush')}`) },
+                  { label: t('briefing'), onClick: () => run({ kind: 'brief-lead' }, `${t('done')}: ${t('briefing')}`) },
+                  {
+                    label: t('groupWorkspace'),
+                    onClick: () => {
+                      setBusy(true)
+                      act(withTeam(state, { kind: 'attach-workspace' })).then(result => {
+                        setBusy(false)
+                        if (result.ok === false) {
+                          onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+                          return
+                        }
+                        onNotice(result.attached > 0 ? t('groupedDone', { n: result.attached }) : t('groupedNone'))
+                      })
                     }
-                    onNotice(result.attached > 0
-                      ? t('groupedDone', { n: result.attached })
-                      : t('groupedNone'))
-                  })
-                },
-                disabled: busy,
-                title: t('tipGroup')
-              }, t('groupWorkspace')),
-              h(Button, { onClick: () => setAddOpen(!addOpen), title: t('tipAdd') }, addOpen ? t('cancel') : t('addMember')),
-              h(Button, {
-                onClick: () => {
-                  if (typeof window.confirm === 'function' && !window.confirm(t('deleteConfirm'))) return
-                  setBusy(true)
-                  act({ kind: 'delete-team', teamId: team.id }).then(result => {
-                    setBusy(false)
-                    if (!result.ok) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
-                    else onBack()
-                  })
-                },
-                disabled: busy,
-                title: t('tipDelete')
-              }, t('deleteTeam'))
+                  },
+                  { label: t('addMember'), onClick: () => setAddOpen(true) },
+                  {
+                    label: t('deleteTeam'),
+                    danger: true,
+                    onClick: () => {
+                      if (typeof window.confirm === 'function' && !window.confirm(t('deleteConfirm'))) return
+                      setBusy(true)
+                      act({ kind: 'delete-team', teamId: team.id }).then(result => {
+                        setBusy(false)
+                        if (!result.ok) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+                        else onBack()
+                      })
+                    }
+                  }
+                ]
+              })
             )
           ),
           h('div', { className: 'stm-work' },
@@ -2026,6 +2194,9 @@ window.__ModuleLoader__.load({
             h(SidePanel, {
               state,
               onNotice,
+              open: panelOpen,
+              onToggle: () => setPanelOpen(!panelOpen),
+              openSession,
               onReply: (id, subject) => {
                 setSelectedId(id)
                 setDraft(`关于「${subject}」：`)
