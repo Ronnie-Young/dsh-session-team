@@ -157,6 +157,7 @@ export async function apply(ctx, config) {
   const noticeTimers = new Map()
   let delivering = false
   let noticeDelivering = false
+  let lastLayout = null
   /** 已附带过身份说明的成员。 */
   const briefed = new Set()
 
@@ -1926,7 +1927,12 @@ export async function apply(ctx, config) {
           timings: { teamsMs: teamsStarted - started, detailMs: Date.now() - teamsStarted },
           writable: true,
           version: await readVersion(),
-          debug: { teams: teams.length, ledgerReports: reports.length, assignments: assignments.length },
+          debug: {
+            teams: teams.length,
+            ledgerReports: reports.length,
+            assignments: assignments.length,
+            ...(lastLayout === null ? {} : { layout: lastLayout }),
+          },
           limits: { maxReportsPerDigest: config.maxReportsPerDigest, deliverOnIdle: config.deliverOnIdle },
         }
       }
@@ -2068,6 +2074,11 @@ export async function apply(ctx, config) {
             if (!registry || typeof registry.archiveSession !== 'function') throw new Error('workspaceRegistry.archiveSession 不可用')
             await registry.archiveSession(sessionId, { stopActivity: true })
             return { ok: true, sessionId }
+          }
+          case 'layout': {
+            // 面板实机尺寸回传（仅用于排查布局问题，不参与业务）。
+            if (body.metrics !== undefined && body.metrics !== null) lastLayout = body.metrics
+            return { ok: true }
           }
           case 'attach-workspace': {
             const team = targetTeam(body)

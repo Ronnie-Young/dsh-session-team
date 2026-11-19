@@ -419,8 +419,9 @@ window.__ModuleLoader__.load({
 .stm-tab-on{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l2)}
 .stm-more{margin-top:8px}
 /* —— 工作台 v2 —— */
-.stm-workbench{overflow:hidden!important}
-.stm-workbench .stm-wrap{max-width:none;height:100%;gap:0}
+.stm-workbench{overflow:hidden!important;padding:14px 18px 16px!important;display:block}
+.stm-workbench .stm-wrap{max-width:none!important;width:100%!important;align-self:stretch;height:100%;gap:0}
+.stm-workbench .stm-body{width:100%}
 .stm-topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:2px 2px 12px;flex-shrink:0}
 .stm-topbar-left{display:flex;flex-direction:column;gap:4px;min-width:0}
 .stm-topbar-title{font-size:18px;font-weight:650;letter-spacing:.01em;color:var(--dsw-alias-label-primary);line-height:1.3;margin:0}
@@ -2129,6 +2130,30 @@ window.__ModuleLoader__.load({
         if (team === undefined || team === null || effectiveId === '') return
         try { window.localStorage.setItem(`session-team:role:${team.id}`, effectiveId) } catch { /* 忽略 */ }
       }, [effectiveId])
+
+      useEffect(() => {
+        const timer = setTimeout(() => {
+          try {
+            const page = window.document.querySelector('.stm-page.stm-workbench')
+            const wrap = page === null ? null : page.querySelector('.stm-wrap')
+            const rail = page === null ? null : page.querySelector('.stm-rail')
+            const main = page === null ? null : page.querySelector('.stm-main')
+            actRaw({
+              kind: 'layout',
+              metrics: {
+                innerWidth: window.innerWidth,
+                innerHeight: window.innerHeight,
+                dpr: window.devicePixelRatio,
+                page: page === null ? 0 : Math.round(page.getBoundingClientRect().width),
+                wrap: wrap === null ? 0 : Math.round(wrap.getBoundingClientRect().width),
+                rail: rail === null ? 0 : Math.round(rail.getBoundingClientRect().width),
+                main: main === null ? 0 : Math.round(main.getBoundingClientRect().width)
+              }
+            })
+          } catch { /* 忽略 */ }
+        }, 900)
+        return () => clearTimeout(timer)
+      }, [])
 
       if (!team) {
         return h('div', { className: 'stm-page' },
