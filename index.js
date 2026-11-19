@@ -1541,9 +1541,9 @@ export async function apply(ctx, config) {
           })
         }
         const nowMs = Date.now()
-        const tasks = await Promise.all(assignments
-          .filter(task => task.teamId === team.id)
-          .slice(-15)
+        const teamTasks = assignments.filter(task => task.teamId === team.id)
+        const tasks = await Promise.all(teamTasks
+          .slice(-50)
           .map(async task => {
             const summary = summaries?.get(task.sessionId)
             const open = task.state === 'dispatched' || task.state === 'paused'
@@ -1566,17 +1566,18 @@ export async function apply(ctx, config) {
           cwd: team.cwd,
           lead: team.lead,
           members,
-          openTasks: assignments.filter(task => task.teamId === team.id
-            && (task.state === 'dispatched' || task.state === 'paused')).length,
+          openTasks: teamTasks.filter(task => task.state === 'dispatched' || task.state === 'paused').length,
+          taskTotal: teamTasks.length,
           tasks,
           pendingReports: pendingReportsOf(team).length,
+          reportTotal: reports.filter(report => report.teamId === team.id).length,
           pendingNotices: pendingNoticesOf(team).length,
           notices: notices.filter(notice => notice.teamId === team.id).slice(-10).map(notice => ({
             createdAt: notice.createdAt,
             delivered: notice.delivered,
             text: oneLine(notice.text, 300),
           })),
-          reports: reports.filter(report => report.teamId === team.id).slice(-20).map(report => ({
+          reports: reports.filter(report => report.teamId === team.id).slice(-50).map(report => ({
             from: report.name,
             role: report.role,
             stage: report.stage,

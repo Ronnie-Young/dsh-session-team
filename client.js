@@ -35,6 +35,15 @@ window.__ModuleLoader__.load({
       briefing: '生成 Lead 说明',
       pending: '待读汇报',
       noticesPending: '待通知',
+      tabOpen: '未完成',
+      tabAll: '全部',
+      tabUnread: '未读',
+      showMore: '显示更多（还剩 {n} 条）',
+      noUnreadReports: '没有未读汇报，点「全部」看历史',
+      noOpenTasks: '没有未完成的任务，点「全部」看历史',
+      olderNotLoaded: '更早的记录未加载（共 {n} 条）',
+      expand: '展开',
+      collapseBody: '收起',
       openTasks: '未完成任务',
       addMember: '从已有会话加入',
       cancel: '收起',
@@ -137,6 +146,15 @@ window.__ModuleLoader__.load({
       briefing: 'Brief the Lead',
       pending: 'Unread reports',
       noticesPending: 'notices pending',
+      tabOpen: 'Open',
+      tabAll: 'All',
+      tabUnread: 'Unread',
+      showMore: 'Show more ({n} left)',
+      noUnreadReports: 'No unread reports; use "All" for history',
+      noOpenTasks: 'No open tasks; use "All" for history',
+      olderNotLoaded: 'Older entries are not loaded ({n} total)',
+      expand: 'Expand',
+      collapseBody: 'Collapse',
       openTasks: 'Open tasks',
       addMember: 'Add existing sessions',
       cancel: 'Close',
@@ -276,6 +294,12 @@ window.__ModuleLoader__.load({
 .stm-report-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--dsw-alias-label-secondary)}
 .stm-report-subject{font-size:13px;font-weight:600;color:var(--dsw-alias-label-primary)}
 .stm-report-body{margin-top:4px;color:var(--dsw-alias-label-secondary);white-space:pre-wrap}
+.stm-report-body-clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.stm-scroll{max-height:340px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-right:4px}
+.stm-tabs{display:flex;gap:6px;align-items:center}
+.stm-tab{border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-secondary);border-radius:999px;padding:2px 10px;font-size:12px;cursor:pointer}
+.stm-tab-on{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);border-color:var(--dsw-alias-border-l2)}
+.stm-more{margin-top:8px}
 .stm-candidate{display:flex;align-items:center;gap:8px;padding:6px 0;font-size:13px;border-bottom:1px solid var(--dsw-alias-border-l1)}
 .stm-candidate:last-child{border-bottom:0}
 .stm-candidate-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -367,9 +391,10 @@ window.__ModuleLoader__.load({
     }
 
     // ---- 小组件 ----
-    function Button({ children, onClick, disabled, primary, ghost }) {
-      const className = `stm-btn${primary ? ' stm-btn-primary' : ''}${ghost ? ' stm-btn-ghost' : ''}`
-      return h('button', { type: 'button', className, onClick, disabled: disabled === true }, children)
+    function Button({ children, onClick, disabled, primary, ghost, style, className, title }) {
+      const base = `stm-btn${primary ? ' stm-btn-primary' : ''}${ghost ? ' stm-btn-ghost' : ''}`
+      const merged = className ? `${base} ${className}` : base
+      return h('button', { type: 'button', className: merged, onClick, disabled: disabled === true, style, title }, children)
     }
 
     function statusOf(member) {
@@ -1083,25 +1108,113 @@ window.__ModuleLoader__.load({
       )
     }
 
+    /** 卡片折叠状态（按 key 记在本地，刷新后保持）。 */
+    function useCollapse(key, initialOpen) {
+      const storeKey = `session-team:card:${key}`
+      const [open, setOpen] = useState(() => {
+        try {
+          const stored = window.localStorage.getItem(storeKey)
+          if (stored === '1' || stored === '0') return stored === '1'
+        } catch { /* 忽略 */ }
+        return initialOpen
+      })
+      useEffect(() => {
+        try { window.localStorage.setItem(storeKey, open ? '1' : '0') } catch { /* 忽略 */ }
+      }, [open])
+      return [open, setOpen]
+    }
+
+    /** 卡片标题栏：标题 + 计数 + 标签页 + 折叠按钮。 */
+    function CardHead({ title, tabs, tab, onTab, open, onToggle, collapseLabel }) {
+      return h('div', { className: 'stm-inline', style: { justifyContent: 'space-between', alignItems: 'center' } },
+        h('div', { className: 'stm-inline', style: { gap: '10px', flexWrap: 'wrap' } },
+          h('h3', { className: 'stm-section-title', style: { margin: 0 } }, title),
+          tabs === null || tabs === undefined
+            ? null
+            : h('div', { className: 'stm-tabs' }, tabs.map(item => h('button', {
+              key: item.id,
+              className: `stm-tab${tab === item.id ? ' stm-tab-on' : ''}`,
+              onClick: () => onTab(item.id)
+            }, `${item.label} ${item.count}`)))
+        ),
+        h(Button, { ghost: true, onClick: onToggle }, open ? collapseLabel : t('expand'))
+      )
+    }
+
+    /** 汇报列表：默认只看未读，按需展开全文与历史。 */
     function ReportList({ state }) {
-      const reports = state?.team?.reports ?? []
-      if (reports.length === 0) {
-        return h('div', { className: 'stm-card' },
-          h('h3', { className: 'stm-section-title' }, t('reports')),
-          h('div', { className: 'stm-empty' }, t('noReports'))
-        )
+      const [tab, setTab] = useState('unread')
+      const [visible, setVisible] = useState(5)
+      const [open, setOpen] = useCollapse('reports', true)
+      const [expanded, setExpanded] = useState(() => new Set())
+      const all = state?.team?.reports ?? []
+      const unread = all.filter(report => !report.delivered)
+      const list = tab === 'unread' ? unread : all
+      const total = Number(state?.team?.reportTotal ?? all.length)
+      const collapsed = tab === 'unread' ? unread.length : total
+      const ordered = list.slice().reverse()
+      const shown = ordered.slice(0, visible)
+      const rest = ordered.length - shown.length
+      const tabs = [
+        { id: 'unread', label: t('tabUnread'), count: unread.length },
+        { id: 'all', label: t('tabAll'), count: total },
+      ]
+
+      function toggleBody(key) {
+        setExpanded(previous => {
+          const next = new Set(previous)
+          if (next.has(key)) next.delete(key)
+          else next.add(key)
+          return next
+        })
       }
+
       return h('div', { className: 'stm-card' },
-        h('h3', { className: 'stm-section-title' }, `${t('reports')} · ${state.team.pendingReports} ${t('pending')}`),
-        reports.slice().reverse().map((report, index) => h('div', { className: 'stm-report', key: `${report.createdAt}-${index}` },
-          h('div', { className: 'stm-report-head' },
-            h('span', { className: 'stm-report-subject' }, report.subject),
-            h('span', { className: 'stm-chip' }, report.state),
-            h('span', null, `${report.from}${report.role ? `（${report.role}）` : ''} · 阶段 ${report.stage}`),
-            h('span', { className: 'stm-chip' }, report.delivered ? t('delivered') : t('queued'))
-          ),
-          h('div', { className: 'stm-report-body' }, report.body)
-        ))
+        h(CardHead, {
+          title: t('reports'),
+          tabs,
+          tab,
+          onTab: id => { setTab(id); setVisible(5) },
+          open,
+          onToggle: () => setOpen(!open),
+          collapseLabel: t('collapseBody')
+        }),
+        open
+          ? h('div', null,
+            collapsed === 0
+              ? h('div', { className: 'stm-empty' }, tab === 'unread' ? t('noUnreadReports') : t('noReports'))
+              : h('div', { className: 'stm-scroll', style: { marginTop: '6px' } },
+                shown.map((report, index) => {
+                  const key = `${report.createdAt}-${index}`
+                  const isOpen = expanded.has(key)
+                  return h('div', { className: 'stm-report', key },
+                    h('div', { className: 'stm-report-head' },
+                      h('span', { className: 'stm-report-subject' }, report.subject),
+                      h('span', { className: 'stm-chip' }, report.state),
+                      h('span', null, `${report.from}${report.role ? `（${report.role}）` : ''} · ${t('stage')} ${report.stage}`),
+                      h('span', { className: 'stm-chip' }, report.delivered ? t('delivered') : t('queued'))
+                    ),
+                    report.body === ''
+                      ? null
+                      : h('div', {
+                        className: `stm-report-body${isOpen ? '' : ' stm-report-body-clamp'}`,
+                        onClick: () => toggleBody(key),
+                        style: { cursor: 'pointer' }
+                      }, report.body),
+                    report.body === ''
+                      ? null
+                      : h(Button, { ghost: true, onClick: () => toggleBody(key), style: { marginTop: '2px' } }, isOpen ? t('collapseBody') : t('expand'))
+                  )
+                })
+              ),
+            rest > 0
+              ? h('div', { className: 'stm-more' }, h(Button, { ghost: true, onClick: () => setVisible(visible + 20) }, t('showMore', { n: rest })))
+              : null,
+            tab === 'all' && total > all.length
+              ? h('div', { className: 'stm-hint', style: { marginTop: '4px' } }, t('olderNotLoaded', { n: total }))
+              : null
+          )
+          : null
       )
     }
 
@@ -1112,9 +1225,24 @@ window.__ModuleLoader__.load({
       return { label: t('taskRunning'), kind: 'running' }
     }
 
+    /** 任务与恢复：默认只看未完成，按需看历史。 */
     function TaskCard({ state, onNotice }) {
       const [busy, setBusy] = useState('')
-      const tasks = state?.team?.tasks ?? []
+      const [tab, setTab] = useState('open')
+      const [visible, setVisible] = useState(10)
+      const [open, setOpen] = useCollapse('tasks', true)
+      const all = state?.team?.tasks ?? []
+      const openTasks = all.filter(task => task.state === 'dispatched' || task.state === 'paused')
+      const list = tab === 'open' ? openTasks : all
+      const total = Number(state?.team?.taskTotal ?? all.length)
+      const ordered = list.slice().reverse()
+      const shown = ordered.slice(0, visible)
+      const rest = ordered.length - shown.length
+      const tabs = [
+        { id: 'open', label: t('tabOpen'), count: Number(state?.team?.openTasks ?? openTasks.length) },
+        { id: 'all', label: t('tabAll'), count: total },
+      ]
+
       function recover(task) {
         setBusy(task.id)
         act(withTeam(state, { kind: 'recover', sessionId: task.sessionId })).then(result => {
@@ -1129,25 +1257,46 @@ window.__ModuleLoader__.load({
             : `${t('done')}: ${resumed.map(item => item.name).join(', ')}`)
         })
       }
+
       return h('div', { className: 'stm-card' },
-        h('h3', { className: 'stm-section-title' }, `${t('tasks')} · ${t('tasksOpen', { n: state?.team?.openTasks ?? 0 })}`),
-        tasks.length === 0
-          ? h('div', { className: 'stm-empty' }, t('noTasks'))
-          : tasks.slice().reverse().map(task => {
-            const status = taskStateOf(task)
-            return h('div', { className: 'stm-report', key: task.id },
-              h('div', { className: 'stm-report-head' },
-                h('span', { className: 'stm-report-subject' }, task.subject),
-                h('span', { className: `stm-chip${status.kind === 'stale' ? ' stm-chip-warn' : ''}` }, status.label),
-                h('span', null, task.name),
-                h('span', null, t('taskDispatchedAt', { time: new Date(task.dispatchedAt).toLocaleTimeString('zh-CN', { hour12: false }) })),
-                task.resumeCount > 0 ? h('span', null, t('taskResumed', { n: task.resumeCount })) : null,
-                task.stale === true
-                  ? h(Button, { ghost: true, disabled: busy === task.id, onClick: () => recover(task) }, busy === task.id ? '…' : t('recover'))
-                  : null
-              )
-            )
-          })
+        h(CardHead, {
+          title: t('tasks'),
+          tabs,
+          tab,
+          onTab: id => { setTab(id); setVisible(10) },
+          open,
+          onToggle: () => setOpen(!open),
+          collapseLabel: t('collapseBody')
+        }),
+        open
+          ? h('div', null,
+            shown.length === 0
+              ? h('div', { className: 'stm-empty' }, tab === 'open' ? t('noOpenTasks') : t('noTasks'))
+              : h('div', { className: 'stm-scroll', style: { marginTop: '6px' } },
+                shown.map(task => {
+                  const status = taskStateOf(task)
+                  return h('div', { className: 'stm-report', key: task.id },
+                    h('div', { className: 'stm-report-head' },
+                      h('span', { className: 'stm-report-subject' }, task.subject),
+                      h('span', { className: `stm-chip${status.kind === 'stale' ? ' stm-chip-warn' : ''}` }, status.label),
+                      h('span', null, task.name),
+                      h('span', null, t('taskDispatchedAt', { time: new Date(task.dispatchedAt).toLocaleTimeString('zh-CN', { hour12: false }) })),
+                      task.resumeCount > 0 ? h('span', null, t('taskResumed', { n: task.resumeCount })) : null,
+                      task.stale === true
+                        ? h(Button, { ghost: true, disabled: busy === task.id, onClick: () => recover(task) }, busy === task.id ? '…' : t('recover'))
+                        : null
+                    )
+                  )
+                })
+              ),
+            rest > 0
+              ? h('div', { className: 'stm-more' }, h(Button, { ghost: true, onClick: () => setVisible(visible + 20) }, t('showMore', { n: rest })))
+              : null,
+            tab === 'all' && total > all.length
+              ? h('div', { className: 'stm-hint', style: { marginTop: '4px' } }, t('olderNotLoaded', { n: total }))
+              : null
+          )
+          : null
       )
     }
 
