@@ -158,6 +158,7 @@ export async function apply(ctx, config) {
   let delivering = false
   let noticeDelivering = false
   let lastLayout = null
+  let lastClientError = null
   /** 已附带过身份说明的成员。 */
   const briefed = new Set()
 
@@ -1952,6 +1953,7 @@ export async function apply(ctx, config) {
             ledgerReports: reports.length,
             assignments: assignments.length,
             ...(lastLayout === null ? {} : { layout: lastLayout }),
+            ...(lastClientError === null ? {} : { clientError: lastClientError }),
           },
           limits: { maxReportsPerDigest: config.maxReportsPerDigest, deliverOnIdle: config.deliverOnIdle },
         }
@@ -2094,6 +2096,16 @@ export async function apply(ctx, config) {
             if (!registry || typeof registry.archiveSession !== 'function') throw new Error('workspaceRegistry.archiveSession 不可用')
             await registry.archiveSession(sessionId, { stopActivity: true })
             return { ok: true, sessionId }
+          }
+          case 'client-error': {
+            // 前端渲染异常回传（仅排查用）。
+            lastClientError = {
+              message: String(body.message ?? ''),
+              stack: String(body.stack ?? '').slice(0, 4000),
+              componentStack: String(body.componentStack ?? '').slice(0, 2000),
+              at: new Date().toISOString(),
+            }
+            return { ok: true }
           }
           case 'layout': {
             // 面板实机尺寸回传（仅用于排查布局问题，不参与业务）。

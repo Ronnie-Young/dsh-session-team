@@ -779,6 +779,14 @@ window.__ModuleLoader__.load({
         try {
           console.error('[dsh-session-team] render failed:', error, info)
         } catch { /* 忽略 */ }
+        try {
+          actRaw({
+            kind: 'client-error',
+            message: String(error?.message ?? error),
+            stack: String(error?.stack ?? ''),
+            componentStack: String(info?.componentStack ?? '')
+          })
+        } catch { /* 忽略 */ }
       }
 
       render() {
