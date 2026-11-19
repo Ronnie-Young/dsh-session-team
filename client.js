@@ -113,6 +113,8 @@ window.__ModuleLoader__.load({
       rename: '重命名',
       injected: '已加入 {n} 人',
       addAgentTitle: '新建智能体角色',
+      addAgentEntry: '＋ 添加角色',
+      rowsEmpty: '至少需要一行，点「添加一行」新增',
       addAgentHint: '等价于新建 session：建好后直接加入本团队，模型可在这里选。',
       addAgentBtn: '创建并加入',
       addAgentCreated: '已新建 {n} 个会话并加入团队'
@@ -212,6 +214,8 @@ window.__ModuleLoader__.load({
       rename: 'Rename',
       injected: 'Added {n} members',
       addAgentTitle: 'New agent role',
+      addAgentEntry: '+ Add role',
+      rowsEmpty: 'At least one row is needed; use "Add row".',
       addAgentHint: 'Creates a new session and adds it to this team; pick its model here.',
       addAgentBtn: 'Create and add',
       addAgentCreated: 'Created {n} sessions and added them to the team'
@@ -573,6 +577,7 @@ window.__ModuleLoader__.load({
           )
         ),
         h('div', { className: 'stm-hint', style: { marginTop: '4px' } }, t('cwdHint')),
+        rows.length === 0 ? h('div', { className: 'stm-hint', style: { marginTop: '8px' } }, t('rowsEmpty')) : null,
         rows.map((row, index) => {
           const rowOption = options.find(option => option.key === row.modelKey) ?? null
           const rowEfforts = rowOption?.efforts ?? []
@@ -627,11 +632,11 @@ window.__ModuleLoader__.load({
             h('input', { type: 'checkbox', checked: row.lead === true, onChange: () => makeLead(index) }),
             t('lead')
           ),
-          h(Button, { ghost: true, onClick: () => setRows(previous => previous.length <= 1 ? previous : previous.filter((_, i) => i !== index)) }, t('removeRow'))
+          h(Button, { ghost: true, onClick: () => setRows(previous => previous.filter((_, i) => i !== index)) }, t('removeRow'))
         )}),
         h('div', { className: 'stm-inline', style: { marginTop: '10px' } },
           h(Button, { ghost: true, onClick: () => setRows(previous => [...previous, { name: '', role: '', stage: previous.length, lead: false, modelKey: fallbackKey, preset: presetDefault, effort: '' }]) }, t('addRow')),
-          h(Button, { primary: true, onClick: submit, disabled: busy || !canCreate || cwd.trim() === '' }, busy ? t('creating') : t('createBtn')),
+          h(Button, { primary: true, onClick: submit, disabled: busy || !canCreate || cwd.trim() === '' || rows.length === 0 }, busy ? t('creating') : t('createBtn')),
           state?.models === null ? h('span', { className: 'stm-hint' }, t('noModelCatalog')) : null
         )
       )
@@ -943,6 +948,7 @@ window.__ModuleLoader__.load({
             )
           )
         ),
+        rows.length === 0 ? h('div', { className: 'stm-hint', style: { marginTop: '8px' } }, t('rowsEmpty')) : null,
         rows.map((row, index) => {
           const rowOption = options.find(option => option.key === row.modelKey) ?? null
           const rowEfforts = rowOption?.efforts ?? []
@@ -1010,11 +1016,12 @@ window.__ModuleLoader__.load({
             }),
             t('lead')
           ),
-          h(Button, { ghost: true, onClick: () => setRows(previous => previous.length <= 1 ? previous : previous.filter((_, i) => i !== index)) }, t('removeRow'))
+          h(Button, { ghost: true, onClick: () => setRows(previous => previous.filter((_, i) => i !== index)) }, t('removeRow'))
         )}),
         h('div', { className: 'stm-inline', style: { marginTop: '10px' } },
           h(Button, { ghost: true, onClick: () => setRows(previous => [...previous, { name: '', role: '', stage: previous.length, lead: false, modelKey: fallbackKey, preset: presetDefault, effort: '' }]) }, t('addRow')),
-          h(Button, { primary: true, onClick: submit, disabled: busy || !canCreate || cwd.trim() === '' }, busy ? t('creating') : t('addAgentBtn'))
+          h(Button, { primary: true, onClick: submit, disabled: busy || !canCreate || cwd.trim() === '' || rows.length === 0 }, busy ? t('creating') : t('addAgentBtn')),
+          h(Button, { ghost: true, onClick: () => { if (typeof onDone === 'function') onDone() } }, t('cancel'))
         )
       )
     }
@@ -1212,13 +1219,7 @@ window.__ModuleLoader__.load({
           ),
           addOpen ? h(AddMembers, { state, onNotice }) : null,
           h('div', { className: 'stm-card' },
-            h('div', { className: 'stm-inline', style: { justifyContent: 'space-between' } },
-              h('h3', { className: 'stm-section-title', style: { margin: 0 } }, t('members')),
-              h(Button, {
-                ghost: true,
-                onClick: () => setAgentOpen(!agentOpen)
-              }, agentOpen ? t('cancel') : `＋ ${t('addRow')}`)
-            ),
+            h('h3', { className: 'stm-section-title' }, t('members')),
             team.members.length === 0
               ? h('div', { className: 'stm-empty' }, t('noTeams'))
               : team.members.map((member, index) => h(MemberRow, {
@@ -1243,7 +1244,9 @@ window.__ModuleLoader__.load({
                 onNotice,
                 onDone: () => setAgentOpen(false)
               })
-              : null
+              : h('div', { className: 'stm-inline', style: { marginTop: '10px' } },
+                h(Button, { ghost: true, onClick: () => setAgentOpen(true) }, t('addAgentEntry'))
+              )
           ),
           team.members.length > 0 ? h(DispatchBox, { state, onNotice }) : null,
           h(TaskCard, { state, onNotice }),
