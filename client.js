@@ -475,7 +475,8 @@ window.__ModuleLoader__.load({
 .stm-chat-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px 10px 18px;flex-shrink:0;border-bottom:1px solid var(--dsw-alias-border-l1)}
 .stm-chat-id{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
 .stm-chat-id>strong{font-size:14px;font-weight:650;letter-spacing:-.01em}
-.stm-chat-meta{font-size:11.5px;color:var(--dsw-alias-label-secondary);display:flex;gap:0;align-items:center;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.stm-chat-meta{font-size:11.5px;color:var(--dsw-alias-label-secondary);display:flex;gap:0;align-items:center;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;font-variant-numeric:tabular-nums;min-width:0}
+.stm-chat-meta>span{overflow:hidden;text-overflow:ellipsis}
 .stm-chat-meta>span+span::before{content:'·';margin:0 7px;opacity:.5}
 .stm-chat-actions{display:flex;align-items:center;gap:2px;flex-shrink:0}
 .stm-ghost-btn{border:0;background:transparent;color:var(--dsw-alias-label-secondary);border-radius:9px;height:32px;padding:0 10px;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition-property:background-color,color;transition-duration:120ms}
@@ -2235,7 +2236,6 @@ window.__ModuleLoader__.load({
       if (member.model !== null && member.model !== undefined) {
         meta.push(`${member.model.model}${member.model.reasoningEffort ? ` · ${member.model.reasoningEffort}` : ''}`)
       }
-      if (member.lead) meta.push(t('lead'))
       const streamText = (live?.streamText !== undefined && live.streamText !== '') ? live.streamText : ''
       const reasoningText = (live?.streamReasoning !== undefined && live.streamReasoning !== '') ? live.streamReasoning : ''
 
@@ -2244,6 +2244,7 @@ window.__ModuleLoader__.load({
           h('div', { className: 'stm-chat-id' },
             h('span', { className: `stm-dot stm-dot-${status.kind}` }),
             h('strong', null, member.name),
+            member.lead ? h('span', { className: 'stm-rail-badge' }, t('lead')) : null,
             h('div', { className: 'stm-chat-meta' },
               meta.map(item => h('span', { key: item }, item)),
               live?.pendingInput !== undefined && live.pendingInput.length > 0
