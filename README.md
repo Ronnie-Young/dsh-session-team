@@ -9,7 +9,8 @@ DSH 自带的 `subagent` / Team 任务板是“当前会话的子代理”。这
 并且允许插件**从零新建**这些会话——一条任务上的团队可以在面板里一次配好。
 
 - **多项目团队**：`teams.json` 存多支团队；面板分「项目团队列表」→「团队详情」两层，像侧栏的工作区列表一样切换；
-- **建队/加人**：从零新建团队（Lead/成员会话 + 模型 + Agent 模式一次配好）、在已有团队里「＋ 添加一行」新建智能体角色（等价于新建 session），或把已有会话加入团队；
+- **建队/加人**：从零新建团队（Lead/成员会话 + 模型 + 思考强度 + Agent 模式一次配好）、在已有团队里「＋ 添加一行」新建智能体角色（等价于新建 session），或把已有会话加入团队；
+- **优先级可拖动排序**：成员列表支持拖动排序（也能 ↑/↓ 微调），排序结果写回「优先级」；
 - **每个角色单独换模型**：读当前可路由的模型目录，选 provider / 模型 / 推理强度；只写该会话的 `model/selection`，不改全局默认，下一回合生效；
 - **有顺序的汇报**：按「阶段 → 先后」排队，Lead 在跑时只排队，空闲时合并成一条摘要投递；Lead 也能主动 `team_collect`；
 - **派活台账与中断恢复**：每次派活落盘；DSH 被强退/重启后，面板「任务与恢复」标出停在半道的任务，一键发「先汇报实际进度、再从断点继续」，`done` 汇报自动关单。
@@ -21,11 +22,11 @@ DSH 自带的 `subagent` / Team 任务板是“当前会话的子代理”。这
 | 方式 | target | 说明 |
 | --- | --- | --- |
 | **插件市场**（发现页） | 先在「发现 → 管理索引源」添加 `https://ronnie-young.github.io/dsh-plugins-market/index.json`，再在市场里搜索 `session-team` 安装 | 收录在 [dsh-plugins-market](https://github.com/Ronnie-Young/dsh-plugins-market) |
-| **GitHub 源**（免 clone） | `github:Ronnie-Young/dsh-session-team#v0.0.2` | pnpm 直接拉取 |
-| **Release 压缩包** | `https://github.com/Ronnie-Young/dsh-session-team/releases/download/v0.0.2/dsh-session-team-0.0.2.tgz` | 从 GitHub Release 直链安装 |
+| **GitHub 源**（免 clone） | `github:Ronnie-Young/dsh-session-team#v0.0.3` | pnpm 直接拉取 |
+| **Release 压缩包** | `https://github.com/Ronnie-Young/dsh-session-team/releases/download/v0.0.3/dsh-session-team-0.0.3.tgz` | 从 GitHub Release 直链安装 |
 | 本地目录（开发/排错） | `/你的路径/dsh-session-team` | 先 `git clone` |
 
-> 安装会申请 danger-full-access 权限，按提示批准。版本号在面板底部显示（`dsh-session-team v0.0.2`）。
+> 安装会申请 danger-full-access 权限，按提示批准。版本号在面板底部显示（`dsh-session-team v0.0.3`）。
 
 ## 用法
 
@@ -60,7 +61,7 @@ CI：`.github/workflows/ci.yml`（push/PR 跑语法检查 + JSON 校验 + 测试
 
 ## 版本
 
-当前 **0.0.2**。版本号由作者（用户）决定：**未经用户明确同意不要修改**。
+当前 **0.0.3**。版本号由作者（用户）决定：**未经用户明确同意不要修改**。
 变更记录见 [CHANGELOG.md](CHANGELOG.md)。
 
 ## License

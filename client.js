@@ -16,6 +16,7 @@ window.__ModuleLoader__.load({
 
     const NS = 'session-team'
     const ROUTE = '/session-team'
+    const VIEW_KEY = 'session-team:view'
     const PANEL_KEY = 'session-team'
 
     const zh = {
@@ -46,7 +47,7 @@ window.__ModuleLoader__.load({
       role: '角色/模型',
       setLead: '设为 Lead',
       roleLabel: '角色',
-      stage: '阶段',
+      stage: '优先级',
       rolePlaceholder: '例如 backend',
       save: '保存',
       statusRunning: '运行中',
@@ -58,6 +59,8 @@ window.__ModuleLoader__.load({
       target: '对象',
       all: '所有非 Lead 成员',
       taskPlaceholder: '写清任务目标、验收标准和落盘位置…',
+      dragHint: '拖动排序',
+      priorityHint: '数字越小越先处理',
       mode: '投递方式',
       modeQueue: '排队（等当前回合结束）',
       modeSteer: '插入（并入当前回合）',
@@ -143,7 +146,7 @@ window.__ModuleLoader__.load({
       role: 'Role / model',
       setLead: 'Set lead',
       roleLabel: 'Role',
-      stage: 'Stage',
+      stage: 'Priority',
       rolePlaceholder: 'e.g. backend',
       save: 'Save',
       statusRunning: 'Running',
@@ -155,6 +158,8 @@ window.__ModuleLoader__.load({
       target: 'Target',
       all: 'All non-Lead members',
       taskPlaceholder: 'Goal, acceptance criteria, where results go…',
+      dragHint: 'Drag to reorder',
+      priorityHint: 'Smaller number is handled first',
       mode: 'Delivery',
       modeQueue: 'Queue (after the current turn)',
       modeSteer: 'Steer (join the current turn)',
@@ -240,6 +245,8 @@ window.__ModuleLoader__.load({
 .stm-row:last-child{border-bottom:0}
 .stm-row-click{cursor:pointer}
 .stm-row-click:hover .stm-name{color:var(--dsw-alias-brand-primary)}
+.stm-drag{cursor:grab;color:var(--dsw-alias-label-secondary);font-size:12px;letter-spacing:-1px;user-select:none;padding:0 2px}
+.stm-row-drag{opacity:.5}
 .stm-dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--dsw-alias-state-idle-primary)}
 .stm-dot-running{background:var(--dsw-alias-state-success-primary)}
 .stm-dot-input{background:var(--dsw-alias-state-warn-primary)}
@@ -489,8 +496,8 @@ window.__ModuleLoader__.load({
       const presets = presetOptions(state)
       const presetDefault = defaultPresetId(state)
       const [rows, setRows] = useState([
-        { name: 'Lead', role: '统筹', stage: 0, lead: true, modelKey: fallbackKey, preset: presetDefault },
-        { name: '', role: '', stage: 1, lead: false, modelKey: fallbackKey, preset: presetDefault }
+        { name: 'Lead', role: '统筹', stage: 0, lead: true, modelKey: fallbackKey, preset: presetDefault, effort: '' },
+        { name: '', role: '', stage: 1, lead: false, modelKey: fallbackKey, preset: presetDefault, effort: '' }
       ])
       const [busy, setBusy] = useState(false)
       const canCreate = state?.creations?.canCreate !== false
@@ -517,6 +524,7 @@ window.__ModuleLoader__.load({
             stage: Number.isFinite(Number(row.stage)) ? Number(row.stage) : index + 1,
             lead: row.lead === true,
             ...(row.preset ? { agentPreset: row.preset } : {}),
+            ...(row.effort ? { reasoningEffort: row.effort } : {}),
             ...(option === null ? {} : { provider: option.provider, model: option.model })
           }
         })
@@ -565,7 +573,10 @@ window.__ModuleLoader__.load({
           )
         ),
         h('div', { className: 'stm-hint', style: { marginTop: '4px' } }, t('cwdHint')),
-        rows.map((row, index) => h('div', { className: 'stm-inline', key: index, style: { marginTop: '8px' } },
+        rows.map((row, index) => {
+          const rowOption = options.find(option => option.key === row.modelKey) ?? null
+          const rowEfforts = rowOption?.efforts ?? []
+          return h('div', { className: 'stm-inline', key: index, style: { marginTop: '8px' } },
           h('input', {
             className: 'stm-input',
             value: row.name,
@@ -584,6 +595,7 @@ window.__ModuleLoader__.load({
             className: 'stm-input',
             value: row.stage,
             type: 'number',
+            title: t('priorityHint'),
             style: { width: '64px' },
             onChange: event => patch(index, { stage: event.target.value })
           }),
@@ -592,25 +604,43 @@ window.__ModuleLoader__.load({
             : h('select', {
               className: 'stm-select',
               value: row.modelKey,
-              style: { width: '210px' },
-              onChange: event => patch(index, { modelKey: event.target.value })
+              style: { width: '190px' },
+              onChange: event => {
+                const key = event.target.value
+                const option = options.find(candidate => candidate.key === key) ?? null
+                patch(index, { modelKey: key, effort: option?.defaultEffort ?? '' })
+              }
             }, options.map(option => h('option', { value: option.key, key: option.key },
               `${option.providerName} · ${option.name}`))),
+          rowEfforts.length === 0
+            ? null
+            : h('select', {
+              className: 'stm-select',
+              value: row.effort ?? '',
+              style: { width: '110px' },
+              title: t('effort'),
+              onChange: event => patch(index, { effort: event.target.value })
+            },
+            h('option', { value: '', key: '' }, t('effortDefault')),
+            rowEfforts.map(item => h('option', { value: item.id, key: item.id }, item.name))),
           h('label', { className: 'stm-inline', style: { gap: '4px', fontSize: '12px' } },
             h('input', { type: 'checkbox', checked: row.lead === true, onChange: () => makeLead(index) }),
             t('lead')
           ),
           h(Button, { ghost: true, onClick: () => setRows(previous => previous.length <= 1 ? previous : previous.filter((_, i) => i !== index)) }, t('removeRow'))
-        )),
+        )}),
         h('div', { className: 'stm-inline', style: { marginTop: '10px' } },
-          h(Button, { ghost: true, onClick: () => setRows(previous => [...previous, { name: '', role: '', stage: previous.length, lead: false, modelKey: fallbackKey, preset: presetDefault }]) }, t('addRow')),
+          h(Button, { ghost: true, onClick: () => setRows(previous => [...previous, { name: '', role: '', stage: previous.length, lead: false, modelKey: fallbackKey, preset: presetDefault, effort: '' }]) }, t('addRow')),
           h(Button, { primary: true, onClick: submit, disabled: busy || !canCreate || cwd.trim() === '' }, busy ? t('creating') : t('createBtn')),
           state?.models === null ? h('span', { className: 'stm-hint' }, t('noModelCatalog')) : null
         )
       )
     }
 
-    function MemberRow({ member, models, state, onNotice }) {
+    function MemberRow({
+      member, models, state, onNotice, index, isFirst, isLast,
+      onMove, onDragStart, onDragOver, onDrop, onDragEnd, dragging
+    }) {
       const options = modelOptions(models)
       const current = member.model
       const fallback = models?.default
@@ -676,7 +706,21 @@ window.__ModuleLoader__.load({
       if (member.unread > 0) chips.push(h('span', { key: 'unread', className: 'stm-chip' }, `${member.unread} ${t('unread')}`))
 
       const effortOptions = selectedOption?.efforts ?? []
-      return h('div', { className: 'stm-row' },
+      return h('div', {
+        className: `stm-row${dragging === true ? ' stm-row-drag' : ''}`,
+        onDragOver,
+        onDrop
+      },
+        h('span', {
+          className: 'stm-drag',
+          draggable: true,
+          title: t('dragHint'),
+          onDragStart: event => {
+            try { event.dataTransfer?.setData('text/plain', member.sessionId) } catch { /* 忽略 */ }
+            if (typeof onDragStart === 'function') onDragStart()
+          },
+          onDragEnd
+        }, '⋮⋮'),
         h('span', { className: `stm-dot stm-dot-${status.kind}` }),
         h('div', { className: 'stm-grow' },
           h('div', { className: 'stm-name' }, member.name, chips),
@@ -697,6 +741,7 @@ window.__ModuleLoader__.load({
                 className: 'stm-input',
                 value: stage,
                 type: 'number',
+                title: t('priorityHint'),
                 onChange: event => setStage(event.target.value),
                 style: { width: '70px' }
               }),
@@ -731,6 +776,8 @@ window.__ModuleLoader__.load({
         ),
         h(Button, { ghost: true, onClick: () => { if (openSession) openSession(member.sessionId) } }, t('open')),
         h(Button, { ghost: true, onClick: () => setEditing(true) }, t('role')),
+        h(Button, { ghost: true, disabled: isFirst === true, onClick: () => { if (typeof onMove === 'function') onMove(-1) } }, '↑'),
+        h(Button, { ghost: true, disabled: isLast === true, onClick: () => { if (typeof onMove === 'function') onMove(1) } }, '↓'),
         member.lead
           ? null
           : h(Button, {
@@ -833,7 +880,7 @@ window.__ModuleLoader__.load({
       const presetDefault = defaultPresetId(state)
       const fallbackKey = models?.default ? `${models.default.provider}\u0001${models.default.model}` : ''
       const [cwd, setCwd] = useState(team?.cwd || state?.defaultCwd || '')
-      const [rows, setRows] = useState([{ name: '', role: '', stage: 0, lead: false, modelKey: fallbackKey, preset: presetDefault }])
+      const [rows, setRows] = useState([{ name: '', role: '', stage: 0, lead: false, modelKey: fallbackKey, preset: presetDefault, effort: '' }])
       const [busy, setBusy] = useState(false)
       const canCreate = state?.creations?.canCreate !== false
 
@@ -860,6 +907,7 @@ window.__ModuleLoader__.load({
             stage: Number.isFinite(Number(row.stage)) ? Number(row.stage) : (team?.members?.length ?? 0) + index + 1,
             lead: row.lead === true,
             ...(row.preset ? { agentPreset: row.preset } : {}),
+            ...(row.effort ? { reasoningEffort: row.effort } : {}),
             ...(option === null ? {} : { provider: option.provider, model: option.model })
           }
         })
@@ -873,7 +921,7 @@ window.__ModuleLoader__.load({
           onNotice(t('addAgentCreated', { n: (result.created ?? []).length }))
           const failed = (result.created ?? []).filter(item => item.modelError !== '')
           if (failed.length > 0) onNotice(`${failed.map(item => `${item.name}: ${item.modelError}`).join('; ')}`)
-          setRows([{ name: '', role: '', stage: 0, lead: false, modelKey: fallbackKey, preset: presetDefault }])
+          setRows([{ name: '', role: '', stage: 0, lead: false, modelKey: fallbackKey, preset: presetDefault, effort: '' }])
           if (typeof onDone === 'function') onDone()
         })
       }
@@ -895,7 +943,10 @@ window.__ModuleLoader__.load({
             )
           )
         ),
-        rows.map((row, index) => h('div', { className: 'stm-inline', key: index, style: { marginTop: '8px' } },
+        rows.map((row, index) => {
+          const rowOption = options.find(option => option.key === row.modelKey) ?? null
+          const rowEfforts = rowOption?.efforts ?? []
+          return h('div', { className: 'stm-inline', key: index, style: { marginTop: '8px' } },
           h('input', {
             className: 'stm-input',
             value: row.name,
@@ -914,6 +965,7 @@ window.__ModuleLoader__.load({
             className: 'stm-input',
             value: row.stage,
             type: 'number',
+            title: t('priorityHint'),
             style: { width: '64px' },
             onChange: event => patch(index, { stage: event.target.value })
           }),
@@ -922,10 +974,25 @@ window.__ModuleLoader__.load({
             : h('select', {
               className: 'stm-select',
               value: row.modelKey,
-              style: { width: '200px' },
-              onChange: event => patch(index, { modelKey: event.target.value })
+              style: { width: '180px' },
+              onChange: event => {
+                const key = event.target.value
+                const option = options.find(candidate => candidate.key === key) ?? null
+                patch(index, { modelKey: key, effort: option?.defaultEffort ?? '' })
+              }
             }, options.map(option => h('option', { value: option.key, key: option.key },
               `${option.providerName} · ${option.name}`))),
+          rowEfforts.length === 0
+            ? null
+            : h('select', {
+              className: 'stm-select',
+              value: row.effort ?? '',
+              style: { width: '110px' },
+              title: t('effort'),
+              onChange: event => patch(index, { effort: event.target.value })
+            },
+            h('option', { value: '', key: '' }, t('effortDefault')),
+            rowEfforts.map(item => h('option', { value: item.id, key: item.id }, item.name))),
           presets.length === 0
             ? null
             : h('select', {
@@ -944,9 +1011,9 @@ window.__ModuleLoader__.load({
             t('lead')
           ),
           h(Button, { ghost: true, onClick: () => setRows(previous => previous.length <= 1 ? previous : previous.filter((_, i) => i !== index)) }, t('removeRow'))
-        )),
+        )}),
         h('div', { className: 'stm-inline', style: { marginTop: '10px' } },
-          h(Button, { ghost: true, onClick: () => setRows(previous => [...previous, { name: '', role: '', stage: previous.length, lead: false, modelKey: fallbackKey, preset: presetDefault }]) }, t('addRow')),
+          h(Button, { ghost: true, onClick: () => setRows(previous => [...previous, { name: '', role: '', stage: previous.length, lead: false, modelKey: fallbackKey, preset: presetDefault, effort: '' }]) }, t('addRow')),
           h(Button, { primary: true, onClick: submit, disabled: busy || !canCreate || cwd.trim() === '' }, busy ? t('creating') : t('addAgentBtn'))
         )
       )
@@ -1078,6 +1145,7 @@ window.__ModuleLoader__.load({
     function TeamDetail({ state, onBack, onNotice }) {
       const [addOpen, setAddOpen] = useState(false)
       const [agentOpen, setAgentOpen] = useState(false)
+      const [dragFrom, setDragFrom] = useState(-1)
       const [busy, setBusy] = useState(false)
       const team = state?.team
       if (!team) {
@@ -1089,6 +1157,18 @@ window.__ModuleLoader__.load({
         )
       }
       const leadMember = team.members.find(member => member.lead)
+
+      function moveMember(from, to) {
+        if (from < 0 || to < 0 || from === to) return
+        const ids = team.members.map(member => member.sessionId)
+        if (from >= ids.length || to >= ids.length) return
+        const [moved] = ids.splice(from, 1)
+        ids.splice(to, 0, moved)
+        act(withTeam(state, { kind: 'reorder-members', order: ids })).then(result => {
+          if (!result.ok) onNotice(`${t('failed')}: ${result.error?.message ?? result.error}`)
+        })
+        setDragFrom(-1)
+      }
 
       function run(body, success) {
         setBusy(true)
@@ -1141,12 +1221,21 @@ window.__ModuleLoader__.load({
             ),
             team.members.length === 0
               ? h('div', { className: 'stm-empty' }, t('noTeams'))
-              : team.members.map(member => h(MemberRow, {
+              : team.members.map((member, index) => h(MemberRow, {
                 key: member.sessionId,
                 member,
                 models: state?.models,
                 state,
-                onNotice
+                onNotice,
+                index,
+                isFirst: index === 0,
+                isLast: index === team.members.length - 1,
+                onMove: delta => moveMember(index, index + delta),
+                onDragStart: () => setDragFrom(index),
+                onDragOver: event => { event.preventDefault() },
+                onDrop: () => moveMember(dragFrom, index),
+                onDragEnd: () => setDragFrom(-1),
+                dragging: dragFrom === index
               })),
             agentOpen
               ? h(AddAgentRows, {
@@ -1168,7 +1257,16 @@ window.__ModuleLoader__.load({
       const snapshot = useStore()
       usePolling()
       const state = snapshot.state
-      const [view, setView] = useState('list')
+      const [view, setView] = useState(() => {
+        try {
+          const stored = window.localStorage.getItem(VIEW_KEY)
+          if (stored === 'list' || stored === 'detail') return stored
+        } catch { /* 忽略 */ }
+        return 'detail'
+      })
+      useEffect(() => {
+        try { window.localStorage.setItem(VIEW_KEY, view) } catch { /* 忽略 */ }
+      }, [view])
       const [creating, setCreating] = useState(false)
       const [notice, setNotice] = useState('')
 
@@ -1186,7 +1284,9 @@ window.__ModuleLoader__.load({
       if (notice) notices.push(h('div', { key: 'notice', className: 'stm-notice' }, notice))
       if (snapshot.error) notices.push(h('div', { key: 'error', className: 'stm-notice stm-notice-error' }, `${t('failed')}: ${snapshot.error}`))
 
-      if (view === 'list') {
+      const effectiveView = view === 'detail' && state?.team ? 'detail' : 'list'
+
+      if (effectiveView === 'list') {
         return h('div', { className: 'stm-page' },
           h('div', { className: 'stm-wrap' },
             h('div', { className: 'stm-head' },

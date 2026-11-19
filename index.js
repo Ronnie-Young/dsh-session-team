@@ -1663,6 +1663,28 @@ export async function apply(ctx, config) {
             scheduleTeamsSave()
             return { ok: true, name }
           }
+          case 'reorder-members': {
+            const team = targetTeam(body)
+            const order = Array.isArray(body.order) ? body.order.filter(id => typeof id === 'string') : []
+            if (order.length === 0) throw new Error('order 不能为空')
+            const remaining = new Map(team.members.map(member => [member.sessionId, member]))
+            const next = []
+            for (const id of order) {
+              const member = remaining.get(id)
+              if (member !== undefined) {
+                next.push(member)
+                remaining.delete(id)
+              }
+            }
+            for (const member of remaining.values()) next.push(member)
+            next.forEach((member, index) => { member.stage = index })
+            team.members = next
+            scheduleTeamsSave()
+            return {
+              ok: true,
+              members: next.map(member => ({ sessionId: member.sessionId, name: member.name, stage: member.stage })),
+            }
+          }
           case 'create-member':
           case 'create-members': {
             // 在已有团队里新建智能体角色（等价于新建 session，可批量）。

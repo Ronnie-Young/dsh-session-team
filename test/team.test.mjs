@@ -668,6 +668,25 @@ test('状态里的 version 直接来自 package.json', async () => {
   assert.equal(state.version, pkg.version)
 })
 
+test('拖动排序：reorder-members 重写成员顺序与优先级', async () => {
+  const h = await harness(TEAM)
+  const order = ['session-b', 'session-lead', 'session-a']
+  const result = await h.callRoute('/session-team/action', {
+    method: 'POST',
+    body: { kind: 'reorder-members', order },
+  })
+  assert.equal(result.ok, true)
+  assert.deepEqual(result.members.map(member => member.sessionId), order)
+  assert.deepEqual(result.members.map(member => member.stage), [0, 1, 2])
+
+  const state = await h.callRoute('/session-team/state')
+  assert.deepEqual(state.team.members.map(member => member.sessionId), order)
+  assert.deepEqual(state.team.members.map(member => member.stage), [0, 1, 2])
+
+  const saved = await h.readTeams()
+  assert.deepEqual(saved.teams[0].members.map(member => member.sessionId), order)
+})
+
 test('未知操作返回错误而不是抛出面板路由', async () => {
   const h = await harness(TEAM)
   const payload = await h.callRoute('/session-team/action', {
