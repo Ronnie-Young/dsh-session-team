@@ -1675,6 +1675,7 @@ export async function apply(ctx, config) {
               id: workspace.id,
               title: workspace.title,
               path: workspace.path,
+              sessions: (workspace.sessionIds ?? []).length,
             }))
           }
         } catch { /* 保持空 */ }
