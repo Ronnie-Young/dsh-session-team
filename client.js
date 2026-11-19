@@ -1458,6 +1458,7 @@ window.__ModuleLoader__.load({
       const fallbackKey = models?.default ? `${models.default.provider}\u0001${models.default.model}` : ''
       const [cwd, setCwd] = useState(team?.cwd || state?.defaultCwd || '')
       const [busy, setBusy] = useState(false)
+      const [formError, setFormError] = useState('')
       const canCreate = state?.creations?.canCreate !== false
       const bodyRef = useRef(null)
       const focusId = useRef('')

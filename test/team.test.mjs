@@ -920,6 +920,28 @@ test('创建成员时不会同时传 workspaceId 和 cwd（session.create 只接
   }
 })
 
+test('client.js 里每个 setter 都有对应的 useState/useRef 声明（防止 ReferenceError）', async () => {
+  const source = await readFile(new URL('../client.js', import.meta.url), 'utf8')
+  // 本文件约定：局部状态一律 `const [name, setName] = useState|useRef`。
+  const declared = new Set(
+    [...source.matchAll(/const\s*\[[^\],]*,\s*([A-Za-z_$][A-Za-z0-9_$]*)\s*\]\s*=\s*use(?:State|Ref)/g)]
+      .map(match => match[1]),
+  )
+  const ignored = new Set(['setInterval', 'setTimeout', 'setItem', 'getItem', 'setImmediate'])
+  const used = new Set(
+    [...source.matchAll(/\b(set[A-Z][A-Za-z0-9_$]*)\b/g)]
+      .map(match => match[1])
+      .filter(name => ignored.has(name) === false),
+  )
+  // 组件 props 传入的回调也可能以 set 开头（例如 setRows/setCwd 作为 props 名），排除形参声明。
+  const params = new Set(
+    [...source.matchAll(/\b(set[A-Z][A-Za-z0-9_$]*)\s*(?:,|\}\s*=\s*\{|=|:)/g)]
+      .map(match => match[1]),
+  )
+  const missing = [...used].filter(name => !declared.has(name) && !params.has(name))
+  assert.deepEqual(missing, [], `使用了未声明/未传入的 setter：${missing.join(', ')}`)
+})
+
 test('未知操作返回错误而不是抛出面板路由', async () => {
   const h = await harness(TEAM)
   const payload = await h.callRoute('/session-team/action', {
