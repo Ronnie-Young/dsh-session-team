@@ -1,6 +1,6 @@
 {
   "name": "dsh-session-team",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "DeepSeek Harness 插件：按项目把多个 session 组织成 agent 团队，一个 Lead 派活、按阶段收汇报，并支持从零建队与中断恢复。",
   "type": "module",
