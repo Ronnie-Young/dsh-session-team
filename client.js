@@ -64,6 +64,8 @@ window.__ModuleLoader__.load({
       me: '我',
       assistantName: '助手',
       toolCalls: '工具调用',
+      copy: '复制',
+      copied: '已复制',
       injectedHint: '系统提示（折叠）',
       roleSettings: '角色设置',
       roleSettingsHint: '改角色、优先级、模型与思考强度；也可以设为 Lead 或移出团队。',
@@ -244,6 +246,8 @@ window.__ModuleLoader__.load({
       me: 'Me',
       assistantName: 'Assistant',
       toolCalls: 'Tool calls',
+      copy: 'Copy',
+      copied: 'Copied',
       injectedHint: 'System note (collapsed)',
       roleSettings: 'Role settings',
       roleSettingsHint: 'Change role, priority, model and reasoning effort; set as Lead or remove from the team.',
@@ -506,8 +510,11 @@ window.__ModuleLoader__.load({
 .stm-rail-item-on .stm-rail-badge{background:var(--stm-brand-soft);color:var(--stm-brand)}
 .stm-rail-unread{background:var(--stm-brand);color:#fff;border-radius:999px;font-size:10px;font-weight:600;line-height:15px;padding:0 6px;flex-shrink:0}
 .stm-main{flex:1;min-width:0;display:flex;flex-direction:column;border-radius:14px;background:var(--dsw-alias-bg-layer-1);overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.05);transition-property:margin-right;transition-duration:200ms;transition-timing-function:cubic-bezier(.2,0,0,1)}
-.stm-main-aside{margin-right:412px}
-.stm-chat-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px 10px 18px;flex-shrink:0;border-bottom:1px solid var(--dsw-alias-border-l1)}
+.stm-main-aside{margin-right:0}
+.stm-chat-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px 10px 18px;flex-shrink:0;border-bottom:1px solid var(--dsw-alias-border-l1);flex-wrap:wrap}
+.stm-chat-head-id{flex-wrap:nowrap;overflow:hidden}
+.stm-chat-head-id>strong{white-space:nowrap;flex-shrink:0}
+.stm-chat-actions{margin-left:auto}
 .stm-chat-id{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
 .stm-chat-id>strong{font-size:14px;font-weight:650;letter-spacing:-.01em}
 .stm-chat-meta{font-size:11.5px;color:var(--dsw-alias-label-secondary);display:flex;gap:0;align-items:center;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;font-variant-numeric:tabular-nums;min-width:0}
@@ -531,7 +538,7 @@ window.__ModuleLoader__.load({
 .stm-tools>summary:hover{color:var(--dsw-alias-label-primary)}
 .stm-tools-body{display:flex;flex-direction:column;gap:4px;margin-top:6px}
 .stm-user-row{display:flex;flex-direction:column;align-items:flex-end;gap:4px;align-self:flex-end;max-width:86%}
-.stm-user-bubble{background:var(--stm-brand-weak);border-radius:16px 16px 5px 16px;padding:10px 14px;font-size:14px;line-height:1.7;color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;box-shadow:inset 0 0 0 1px var(--stm-brand-soft)}
+.stm-user-bubble{background:color-mix(in srgb,var(--stm-brand) 13%,var(--dsw-alias-bg-layer-1));border-radius:16px 16px 5px 16px;padding:10px 14px;font-size:14px;line-height:1.7;color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--stm-brand) 28%,transparent)}
 .stm-user-meta{font-size:11px;color:var(--stm-brand);font-variant-numeric:tabular-nums;opacity:.85}
 .stm-sys{max-width:100%}
 .stm-sys>summary{cursor:pointer;font-size:11.5px;color:var(--dsw-alias-label-secondary);list-style:none;display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:7px;border:1px dashed var(--dsw-alias-border-l2)}
@@ -575,7 +582,8 @@ window.__ModuleLoader__.load({
 .stm-modal-card{width:600px;max-width:92vw;max-height:86vh;overflow:auto;background:var(--dsw-alias-bg-layer-1);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 12px 32px -8px rgba(0,0,0,.28),0 32px 64px -16px rgba(0,0,0,.24)}
 .stm-drawer-out{animation:stm-slide-out 180ms cubic-bezier(.4,0,1,1) forwards}
 @keyframes stm-slide-out{from{transform:translateX(0);opacity:1}to{transform:translateX(24px);opacity:0}}
-.stm-drawer{position:absolute;top:0;right:0;bottom:0;width:396px;max-width:92%;z-index:40;display:flex;flex-direction:column;background:var(--dsw-alias-bg-layer-1);border-radius:14px;overflow:hidden;animation:stm-slide-in 200ms cubic-bezier(.2,0,0,1);box-shadow:0 0 0 1px rgba(0,0,0,.06),-8px 0 24px -8px rgba(0,0,0,.2),-24px 0 56px -16px rgba(0,0,0,.16)}
+.stm-drawer-backdrop{position:absolute;inset:0;z-index:35;background:rgba(0,0,0,.22);animation:stm-fade-in 160ms ease-out}
+.stm-drawer{position:absolute;top:8px;right:8px;bottom:8px;width:400px;max-width:92%;z-index:40;display:flex;flex-direction:column;background:var(--dsw-alias-bg-layer-1);border-radius:14px;overflow:hidden;animation:stm-slide-in 200ms cubic-bezier(.2,0,0,1);box-shadow:0 0 0 1px rgba(0,0,0,.06),-8px 0 24px -8px rgba(0,0,0,.2),-24px 0 56px -16px rgba(0,0,0,.16)}
 .stm-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 8px 10px 16px;flex-shrink:0;border-bottom:1px solid var(--dsw-alias-border-l1)}
 .stm-drawer-title{font-size:12px;font-weight:650;letter-spacing:.03em;text-transform:uppercase;color:var(--dsw-alias-label-secondary)}
 .stm-drawer-tabs{display:flex;gap:2px;flex-wrap:wrap;padding:8px 10px;flex-shrink:0;border-bottom:1px solid var(--dsw-alias-border-l1)}
@@ -595,7 +603,12 @@ window.__ModuleLoader__.load({
 .md-h4{font-size:14px}
 .md-list{margin:6px 0;padding-left:22px}
 .md-list li{margin:2px 0}
-.md-code{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;background:var(--dsw-alias-bg-layer-2,#f4f4f4);border-radius:8px;padding:10px 12px;margin:8px 0;overflow-x:auto;white-space:pre}
+.md-code-block{margin:10px 0;border-radius:10px;background:color-mix(in srgb,var(--dsw-alias-label-primary) 5%,var(--dsw-alias-bg-layer-1));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--dsw-alias-label-primary) 12%,transparent);overflow:hidden}
+.md-code-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 8px 4px 12px;border-bottom:1px solid color-mix(in srgb,var(--dsw-alias-label-primary) 10%,transparent)}
+.md-code-lang{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--dsw-alias-label-secondary);font-weight:600}
+.md-code-copy{border:0;background:transparent;color:var(--dsw-alias-label-secondary);font-size:11.5px;padding:3px 8px;border-radius:6px;cursor:pointer;transition-property:background-color,color;transition-duration:120ms}
+.md-code-copy:hover{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}
+.md-code{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;padding:10px 12px;overflow-x:auto;white-space:pre;margin:0}
 .md-inline-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:var(--dsw-alias-bg-layer-2,#f4f4f4);border-radius:4px;padding:1px 5px}
 .md-quote{border-left:2px solid var(--dsw-alias-border-l2);padding:2px 0 2px 12px;margin:8px 0;color:var(--dsw-alias-label-secondary)}
 .md-table-wrap{overflow-x:auto;margin:8px 0;border-radius:10px;box-shadow:0 0 0 1px var(--dsw-alias-border-l1)}
@@ -1966,6 +1979,40 @@ window.__ModuleLoader__.load({
       return nodes
     }
 
+    /** 代码块：独立底色 + 语言标签 + 一键复制。 */
+    function MdCode({ code, lang }) {
+      const [copied, setCopied] = useState(false)
+      function copy() {
+        const text = String(code ?? '')
+        const done = () => {
+          setCopied(true)
+          setTimeout(() => setCopied(false), 1500)
+        }
+        try {
+          if (navigator?.clipboard?.writeText) {
+            navigator.clipboard.writeText(text).then(done).catch(() => {
+              const area = window.document.createElement('textarea')
+              area.value = text
+              window.document.body.appendChild(area)
+              area.select()
+              try { window.document.execCommand('copy') } catch { /* 忽略 */ }
+              window.document.body.removeChild(area)
+              done()
+            })
+            return
+          }
+        } catch { /* 忽略 */ }
+        done()
+      }
+      return h('div', { className: 'md-code-block' },
+        h('div', { className: 'md-code-head' },
+          h('span', { className: 'md-code-lang' }, lang === '' ? 'code' : lang),
+          h('button', { className: 'md-code-copy', onClick: copy }, copied ? t('copied') : t('copy'))
+        ),
+        h('pre', { className: 'md-code' }, String(code ?? ''))
+      )
+    }
+
     /** 极简 Markdown 渲染：标题、列表、代码块、表格、引用、分隔线、行内样式。 */
     function renderMarkdown(text) {
       const lines = String(text ?? '').split('\n')
@@ -1998,7 +2045,7 @@ window.__ModuleLoader__.load({
           const code = []
           while (i < lines.length && !/^\s*```/.test(lines[i])) { code.push(lines[i]); i += 1 }
           i += 1
-          blocks.push(h('pre', { key: nextKey(), className: 'md-code', 'data-lang': lang }, code.join('\n')))
+          blocks.push(h(MdCode, { key: nextKey(), code: code.join('\n'), lang }))
           continue
         }
         if (isTableRow(line) && i + 1 < lines.length && isTableSep(lines[i + 1])) {
@@ -2342,10 +2389,11 @@ window.__ModuleLoader__.load({
           ),
           h('div', { className: 'stm-chat-actions' },
             h('button', {
-              className: 'stm-chip-btn',
+              className: 'stm-icon-btn',
               title: t('roleSettings'),
+              'aria-label': t('roleSettings'),
               onClick: () => { if (typeof onSettings === 'function') onSettings(sessionId) }
-            }, h('span', { className: 'stm-chip-btn-icon' }, h(Icon, { name: 'sliders' })), t('roleSettings')),
+            }, h(Icon, { name: 'sliders' })),
             h('button', { className: 'stm-ghost-btn', onClick: () => { if (openSession) openSession(sessionId) } }, t('drawerOpenChat')),
             h('button', {
               className: 'stm-ghost-btn',
@@ -2727,6 +2775,13 @@ window.__ModuleLoader__.load({
               reportCount: unreadCount,
               onSettings: id => setSettingsId(id)
             }),
+            sideOpen || sideClosing
+              ? h('div', {
+                className: 'stm-drawer-backdrop',
+                onClick: closeSide,
+                'aria-hidden': true
+              })
+              : null,
             sideOpen || sideClosing
               ? h(SideDrawer, {
                 state,
