@@ -188,7 +188,7 @@ window.__ModuleLoader__.load({
       rename: '重命名',
       injected: '已加入 {n} 人',
       addAgentTitle: '新建智能体角色',
-      addAgentEntry: '＋ 添加角色',
+      addAgentEntry: '添加角色',
       rowsEmpty: '至少需要一行，点「添加一行」新增',
       addAgentHint: '等价于新建 session：建好后直接加入本团队，模型可在这里选。',
       addAgentBtn: '创建并加入',
@@ -364,7 +364,7 @@ window.__ModuleLoader__.load({
       rename: 'Rename',
       injected: 'Added {n} members',
       addAgentTitle: 'New agent role',
-      addAgentEntry: '+ Add role',
+      addAgentEntry: 'Add role',
       rowsEmpty: 'At least one row is needed; use "Add row".',
       addAgentHint: 'Creates a new session and adds it to this team; pick its model here.',
       addAgentBtn: 'Create and add',
@@ -441,7 +441,7 @@ window.__ModuleLoader__.load({
 .stm-topbar-meta>span+span::before{content:'·';margin:0 8px;opacity:.5}
 .stm-meta-num{font-variant-numeric:tabular-nums}
 .stm-topbar-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
-.stm-icon-btn{border:0;background:transparent;color:var(--dsw-alias-label-secondary);border-radius:9px;height:32px;min-width:32px;padding:0 9px;font-size:14px;line-height:1;cursor:pointer;transition-property:background-color,color;transition-duration:120ms}
+.stm-icon-btn{border:0;background:transparent;color:var(--dsw-alias-label-secondary);border-radius:9px;height:32px;min-width:32px;padding:0 8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition-property:background-color,color;transition-duration:120ms}
 .stm-icon-btn:hover{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}
 .stm-icon-btn:active{transform:scale(.96)}
 .stm-menu-wrap{position:relative}
@@ -502,12 +502,12 @@ window.__ModuleLoader__.load({
 .stm-interrupt{border:0;background:transparent;color:var(--dsw-alias-label-error,#d9534f);border-radius:9px;font-size:12px;height:32px;padding:0 10px;cursor:pointer;transition-property:background-color;transition-duration:120ms}
 .stm-interrupt:hover{background:var(--dsw-alias-bg-layer-2)}
 .stm-compose-hint{font-size:11px;color:var(--dsw-alias-label-secondary);text-wrap:pretty}
-.stm-rail-gear{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;font-size:16px;line-height:1;color:var(--dsw-alias-label-secondary);border-radius:9px;transition-property:background-color,color;transition-duration:120ms}
+.stm-rail-gear{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;color:var(--dsw-alias-label-secondary);border-radius:9px;transition-property:background-color,color;transition-duration:120ms}
 .stm-rail-gear:hover{color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-bg-layer-2))}
 .stm-chip-btn{display:inline-flex;align-items:center;gap:8px;height:32px;padding:0 12px;border:1px solid var(--dsw-alias-border-l1);border-radius:9px;font-size:12.5px;font-weight:500;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-layer-2,transparent);cursor:pointer;transition-property:background-color,transform;transition-duration:120ms}
 .stm-chip-btn:hover{background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-bg-layer-2))}
 .stm-chip-btn:active{transform:scale(.96)}
-.stm-chip-btn-icon{font-size:14px;line-height:1}
+.stm-chip-btn-icon{display:inline-flex;align-items:center;line-height:1}
 .stm-modal-backdrop{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.28);backdrop-filter:blur(2px);animation:stm-fade-in 140ms ease-out}
 @keyframes stm-fade-in{from{opacity:0}to{opacity:1}}
 .stm-modal-card{width:600px;max-width:92vw;max-height:86vh;overflow:auto;background:var(--dsw-alias-bg-layer-1);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 12px 32px -8px rgba(0,0,0,.28),0 32px 64px -16px rgba(0,0,0,.24)}
@@ -677,6 +677,55 @@ window.__ModuleLoader__.load({
         headers: { accept: 'application/json' }
       })
       return await response.json()
+    }
+
+    // ---- 图标（内联 SVG，不使用 emoji） ----
+    function Icon({ name, size }) {
+      const common = {
+        width: size ?? 16,
+        height: size ?? 16,
+        viewBox: '0 0 16 16',
+        fill: 'none',
+        stroke: 'currentColor',
+        strokeWidth: 1.5,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+        'aria-hidden': true,
+        focusable: false,
+      }
+      if (name === 'sliders') {
+        return h('svg', common,
+          h('path', { d: 'M2.5 4.5h4M9.5 4.5h4M2.5 11.5h6M11.5 11.5h2' }),
+          h('circle', { cx: 8, cy: 4.5, r: 1.5 }),
+          h('circle', { cx: 10, cy: 11.5, r: 1.5 })
+        )
+      }
+      if (name === 'more') {
+        return h('svg', common,
+          h('circle', { cx: 3.5, cy: 8, r: 1, fill: 'currentColor', stroke: 'none' }),
+          h('circle', { cx: 8, cy: 8, r: 1, fill: 'currentColor', stroke: 'none' }),
+          h('circle', { cx: 12.5, cy: 8, r: 1, fill: 'currentColor', stroke: 'none' })
+        )
+      }
+      if (name === 'plus') {
+        return h('svg', common, h('path', { d: 'M8 3v10M3 8h10' }))
+      }
+      if (name === 'close') {
+        return h('svg', common, h('path', { d: 'M4 4l8 8M12 4l-8 8' }))
+      }
+      if (name === 'chevron-left') {
+        return h('svg', common, h('path', { d: 'M10 3.5L5.5 8l4.5 4.5' }))
+      }
+      if (name === 'chevron-right') {
+        return h('svg', common, h('path', { d: 'M6 3.5L10.5 8 6 12.5' }))
+      }
+      if (name === 'refresh') {
+        return h('svg', common,
+          h('path', { d: 'M13 8a5 5 0 1 1-1.6-3.7' }),
+          h('path', { d: 'M13 3v3h-3' })
+        )
+      }
+      return null
     }
 
     // ---- 小组件 ----
@@ -1047,7 +1096,7 @@ window.__ModuleLoader__.load({
               h('h3', { className: 'stm-section-title', style: { margin: 0 } }, `${member.name} · ${t('roleSettings')}`),
               h('div', { className: 'stm-hint', style: { marginTop: '4px' } }, t('roleSettingsHint'))
             ),
-            h('button', { className: 'stm-icon-btn', onClick: onClose }, '✕')
+            h('button', { className: 'stm-icon-btn', onClick: onClose, title: t('cancel') }, h(Icon, { name: 'close' }))
           ),
           h('div', { className: 'stm-inline', style: { marginTop: '12px', gap: '8px' } },
             h('span', { className: `stm-dot stm-dot-${status.kind}` }),
@@ -1686,7 +1735,7 @@ window.__ModuleLoader__.load({
       )
     }
 
-    /** 小菜单：次要操作收进 ⋯。 */
+    /** 小菜单：次要操作收进「更多」菜单。 */
     function MenuButton({ title, items }) {
       const [open, setOpen] = useState(false)
       useEffect(() => {
@@ -1698,7 +1747,7 @@ window.__ModuleLoader__.load({
       const visible = (items ?? []).filter(item => item !== null && item !== undefined)
       if (visible.length === 0) return null
       return h('div', { className: 'stm-menu-wrap', onClick: event => event.stopPropagation() },
-        h('button', { className: 'stm-icon-btn', title, onClick: () => setOpen(!open) }, '⋯'),
+        h('button', { className: 'stm-icon-btn', title, onClick: () => setOpen(!open) }, h(Icon, { name: 'more' })),
         open
           ? h('div', { className: 'stm-menu' }, visible.map(item => h('button', {
             key: item.label,
@@ -1715,7 +1764,7 @@ window.__ModuleLoader__.load({
       return h('div', { className: 'stm-rail' },
         h('div', { className: 'stm-rail-head' },
           h('span', null, `${t('railTitle')} ${members.length}`),
-          h(Button, { ghost: true, onClick: onAdd, title: t('addAgentEntry') }, adding ? t('cancel') : '＋')
+          h(Button, { ghost: true, onClick: onAdd, title: t('addAgentEntry') }, adding ? t('cancel') : h(Icon, { name: 'plus' }))
         ),
         h('div', { className: 'stm-rail-list' },
           members.map(member => {
@@ -1746,7 +1795,7 @@ window.__ModuleLoader__.load({
                   event.stopPropagation()
                   if (typeof onSettings === 'function') onSettings(member.sessionId)
                 }
-              }, '⚙')
+              }, h(Icon, { name: 'sliders' }))
             )
           })
         )
@@ -2120,13 +2169,13 @@ window.__ModuleLoader__.load({
               className: 'stm-chip-btn',
               title: t('roleSettings'),
               onClick: () => { if (typeof onSettings === 'function') onSettings(sessionId) }
-            }, h('span', { className: 'stm-chip-btn-icon' }, '⚙'), t('roleSettings')),
+            }, h('span', { className: 'stm-chip-btn-icon' }, h(Icon, { name: 'sliders' })), t('roleSettings')),
             h('button', { className: 'stm-ghost-btn', onClick: () => { if (openSession) openSession(sessionId) } }, t('drawerOpenChat')),
             h('button', {
               className: 'stm-ghost-btn',
               onClick: onToggleSide,
               title: t('panelExpand')
-            }, `${t('sideTrigger', { n: taskCount, m: reportCount })} ${sideOpen ? '▸' : '◂'}`),
+            }, t('sideTrigger', { n: taskCount, m: reportCount }), h(Icon, { name: sideOpen ? 'chevron-right' : 'chevron-left' })),
             h(MenuButton, {
               title: t('chatMenu'),
               items: [
