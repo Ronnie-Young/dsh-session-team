@@ -290,7 +290,15 @@ async function harness(configInput, options = {}) {
       return JSON.parse(await readFile(join(stateDir, 'teams.json'), 'utf8'))
     },
     async readLedger() {
-      await tick(400)
+      // 台账是防抖写入：短暂轮询等待文件出现，避免测试抖动。
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        await tick(100)
+        try {
+          return JSON.parse(await readFile(join(stateDir, 'ledger.json'), 'utf8'))
+        } catch {
+          // 还没写出来，继续等
+        }
+      }
       return JSON.parse(await readFile(join(stateDir, 'ledger.json'), 'utf8'))
     },
   }
