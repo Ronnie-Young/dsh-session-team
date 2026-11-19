@@ -551,8 +551,8 @@ window.__ModuleLoader__.load({
 .stm-item-body-open{-webkit-line-clamp:initial}
 .md-p{margin:0}
 .md-h1,.md-h2,.md-h3,.md-h4{margin:14px 0 6px;font-weight:650;color:var(--dsw-alias-label-primary);line-height:1.4}
-.md-h1{font-size:19px}
-.md-h2{font-size:17px}
+.md-h1{font-size:18px}
+.md-h2{font-size:16px}
 .md-h3{font-size:15px}
 .md-h4{font-size:14px}
 .md-list{margin:6px 0;padding-left:22px}
@@ -560,10 +560,19 @@ window.__ModuleLoader__.load({
 .md-code{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.6;background:var(--dsw-alias-bg-layer-2,#f4f4f4);border-radius:8px;padding:10px 12px;margin:8px 0;overflow-x:auto;white-space:pre}
 .md-inline-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;background:var(--dsw-alias-bg-layer-2,#f4f4f4);border-radius:4px;padding:1px 5px}
 .md-quote{border-left:2px solid var(--dsw-alias-border-l2);padding:2px 0 2px 12px;margin:8px 0;color:var(--dsw-alias-label-secondary)}
-.md-table{border-collapse:collapse;margin:8px 0;font-size:12.5px;width:100%}
-.md-table th,.md-table td{border:1px solid var(--dsw-alias-border-l1);padding:4px 8px;text-align:left;vertical-align:top}
+.md-table-wrap{overflow-x:auto;margin:8px 0;border-radius:10px;box-shadow:0 0 0 1px var(--dsw-alias-border-l1)}
+.md-table-wrap .md-table{margin:0}
+.md-table{border-collapse:collapse;font-size:12.5px;width:100%}
+.md-table th,.md-table td{border-bottom:1px solid var(--dsw-alias-border-l1);border-right:1px solid var(--dsw-alias-border-l1);padding:6px 10px;text-align:left;vertical-align:top}
+.md-table tr:last-child td{border-bottom:0}
+.md-table th:last-child,.md-table td:last-child{border-right:0}
 .md-table th{background:var(--dsw-alias-bg-layer-2,transparent);font-weight:600}
 .md-hr{border:0;border-top:1px solid var(--dsw-alias-border-l1);margin:12px 0}
+.md-tasklist{list-style:none;padding-left:2px}
+.md-task,.md-task-done{display:flex;gap:8px;align-items:flex-start;margin:3px 0}
+.md-checkbox{width:14px;height:14px;border-radius:4px;box-shadow:inset 0 0 0 1.5px var(--dsw-alias-border-l2);display:inline-flex;align-items:center;justify-content:center;font-size:10px;line-height:1;flex-shrink:0;margin-top:4px;color:var(--dsw-alias-label-primary)}
+.md-task-done{color:var(--dsw-alias-label-secondary);text-decoration:line-through}
+.md-task-done .md-checkbox{background:var(--dsw-alias-label-primary);color:var(--dsw-alias-bg-base);box-shadow:none}
 .md-bold{font-weight:650}
 .md-em{font-style:italic}
 .md-link{color:var(--dsw-alias-brand-primary,inherit);text-decoration:underline}
@@ -1911,9 +1920,11 @@ window.__ModuleLoader__.load({
           const headCells = header.map((cell, ci) => h('th', { key: ci }, renderInline(cell, `th${ci}`)))
           const bodyRows = rows.map((row, ri) => h('tr', { key: ri },
             row.map((cell, ci) => h('td', { key: ci }, renderInline(cell, `td${ri}-${ci}`)))))
-          blocks.push(h('table', { key: nextKey(), className: 'md-table' },
-            h('thead', null, h('tr', null, headCells)),
-            h('tbody', null, bodyRows)
+          blocks.push(h('div', { key: nextKey(), className: 'md-table-wrap' },
+            h('table', { className: 'md-table' },
+              h('thead', null, h('tr', null, headCells)),
+              h('tbody', null, bodyRows)
+            )
           ))
           continue
         }
@@ -1928,6 +1939,23 @@ window.__ModuleLoader__.load({
           const quote = []
           while (i < lines.length && /^\s*>/.test(lines[i])) { quote.push(lines[i].replace(/^\s*>\s?/, '')); i += 1 }
           blocks.push(h('div', { key: nextKey(), className: 'md-quote md-p' }, renderInline(quote.join('\n'), `q${key}`)))
+          continue
+        }
+        const taskItem = line.match(/^\s*[-*]\s+\[([ xX])\]\s+(.+)$/)
+        if (taskItem !== null) {
+          const items = []
+          while (i < lines.length) {
+            const match = lines[i].match(/^\s*[-*]\s+\[([ xX])\]\s+(.+)$/)
+            if (match === null) break
+            items.push({ done: match[1].toLowerCase() === 'x', text: match[2] })
+            i += 1
+          }
+          blocks.push(h('ul', { key: nextKey(), className: 'md-list md-tasklist' },
+            items.map((item, ii) => h('li', { key: ii, className: item.done ? 'md-task-done' : 'md-task' },
+              h('span', { className: 'md-checkbox', 'aria-hidden': true }, item.done ? '✓' : ''),
+              renderInline(item.text, `task${ii}`)
+            ))
+          ))
           continue
         }
         const bullet = line.match(/^\s*([-*])\s+(.+)$/)
