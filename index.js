@@ -552,20 +552,34 @@ export async function apply(ctx, config) {
       const time = Number(event.time) || 0
       if (event.type === 'user/message') {
         const text = textOfBlocks(data.content)
-        if (text !== '') messages.push({ seq, time, role: 'user', text: oneLine(text, 1500) })
+        if (text !== '') {
+          messages.push({
+            seq,
+            time,
+            role: 'user',
+            text: text.length > 6000 ? `${text.slice(0, 6000)}\n…` : text,
+          })
+        }
       } else if (event.type === 'assistant/message') {
         const message = data.message ?? {}
         const text = textOfBlocks(message.content)
         const tools = toolNamesOf(message.content)
         if (text !== '' || tools.length > 0) {
-          messages.push({ seq, time, role: 'assistant', text: oneLine(text, 1500), tools })
+          messages.push({
+            seq,
+            time,
+            role: 'assistant',
+            text: text.length > 6000 ? `${text.slice(0, 6000)}\n…` : text,
+            tools,
+          })
         }
       } else if (event.type === 'tool/call') {
         messages.push({
           seq,
           time,
           role: 'tool',
-          text: `${String(data.name ?? 'tool')} ${oneLine(String(data.arguments ?? ''), 200)}`.trim(),
+          name: String(data.name ?? 'tool'),
+          text: oneLine(String(data.arguments ?? ''), 300),
           tools: [],
         })
       }

@@ -61,6 +61,10 @@ window.__ModuleLoader__.load({
       generating: '正在生成',
       thinking: '思考中',
       systemBlock: '系统上下文',
+      me: '我',
+      assistantName: '助手',
+      toolCalls: '工具调用',
+      injectedHint: '系统提示（折叠）',
       roleSettings: '角色设置',
       roleSettingsHint: '改角色、优先级、模型与思考强度；也可以设为 Lead 或移出团队。',
       setLeadDone: '已设为 Lead',
@@ -237,6 +241,10 @@ window.__ModuleLoader__.load({
       generating: 'Generating',
       thinking: 'Thinking',
       systemBlock: 'System context',
+      me: 'Me',
+      assistantName: 'Assistant',
+      toolCalls: 'Tool calls',
+      injectedHint: 'System note (collapsed)',
       roleSettings: 'Role settings',
       roleSettingsHint: 'Change role, priority, model and reasoning effort; set as Lead or remove from the team.',
       setLeadDone: 'Set as Lead',
@@ -474,7 +482,25 @@ window.__ModuleLoader__.load({
 .stm-ghost-btn:hover{background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary)}
 .stm-ghost-btn:active{transform:scale(.96)}
 .stm-chat-body{flex:1;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:24px 0 8px}
-.stm-thread{max-width:min(760px,100%);margin:0 auto;padding:0 32px;display:flex;flex-direction:column;gap:20px}
+.stm-thread{max-width:min(780px,100%);margin:0 auto;padding:0 32px;display:flex;flex-direction:column;gap:18px}
+.stm-turn{display:flex;flex-direction:column;gap:8px;max-width:100%}
+.stm-turn-head{display:flex;align-items:center;gap:8px}
+.stm-avatar{width:22px;height:22px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-secondary);font-size:10px;font-weight:700;letter-spacing:.02em;flex-shrink:0}
+.stm-turn-name{font-size:12.5px;font-weight:600;color:var(--dsw-alias-label-primary)}
+.stm-turn-time{font-size:11px;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums}
+.stm-turn-body{font-size:14px;line-height:1.75;color:var(--dsw-alias-label-primary);padding-left:30px}
+.stm-tools{margin-left:30px}
+.stm-tools>summary{cursor:pointer;font-size:11.5px;color:var(--dsw-alias-label-secondary);list-style:none;display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:7px;background:var(--dsw-alias-bg-layer-2,transparent)}
+.stm-tools>summary::-webkit-details-marker{display:none}
+.stm-tools>summary:hover{color:var(--dsw-alias-label-primary)}
+.stm-tools-body{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.stm-user-row{display:flex;flex-direction:column;align-items:flex-end;gap:4px;align-self:flex-end;max-width:86%}
+.stm-user-bubble{background:var(--dsw-alias-bg-layer-2,var(--dsw-alias-bg-layer-1));border-radius:16px 16px 5px 16px;padding:10px 14px;font-size:14px;line-height:1.7;color:var(--dsw-alias-label-primary);white-space:pre-wrap;word-break:break-word;box-shadow:0 0 0 1px rgba(0,0,0,.04)}
+.stm-user-meta{font-size:11px;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums}
+.stm-sys{max-width:100%}
+.stm-sys>summary{cursor:pointer;font-size:11.5px;color:var(--dsw-alias-label-secondary);list-style:none;display:inline-flex;align-items:center;gap:6px;padding:3px 8px;border-radius:7px;border:1px dashed var(--dsw-alias-border-l2)}
+.stm-sys>summary::-webkit-details-marker{display:none}
+.stm-sys-body{margin-top:6px;padding:8px 12px;border-left:2px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);font-size:12.5px;line-height:1.7;white-space:pre-wrap;max-height:240px;overflow:auto}
 .stm-msg{display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.75;color:var(--dsw-alias-label-primary)}
 .stm-msg-user{align-self:flex-end;max-width:86%;background:var(--dsw-alias-bg-layer-2,var(--dsw-alias-bg-layer-1));border-radius:14px 14px 5px 14px;padding:9px 14px;box-shadow:0 0 0 1px rgba(0,0,0,.04)}
 .stm-msg-role{font-size:11px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--dsw-alias-label-secondary);display:flex;gap:8px;align-items:center;font-variant-numeric:tabular-nums}
@@ -1940,60 +1966,85 @@ window.__ModuleLoader__.load({
       return blocks
     }
 
-    /** 一条对话消息。 */
-    function MessageRow({ message, expanded, onToggle }) {
-      const text = message.text ?? ''
-      if (message.role === 'tool') {
-        return h('div', { className: 'stm-tool', title: text }, text.length > 160 ? `${text.slice(0, 160)}…` : text)
+    /** 把时间线切成「轮」：用户一条、助手若干条 + 工具调用。 */
+    function buildTurns(messages) {
+      const turns = []
+      let current = null
+      for (const message of messages) {
+        if (message.role === 'user') {
+          turns.push({ kind: 'user', seq: message.seq, time: message.time, text: message.text })
+          current = null
+          continue
+        }
+        if (message.role === 'tool') {
+          if (current === null) {
+            turns.push({ kind: 'tool', seq: message.seq, time: message.time, tools: [{ name: message.name, args: message.text }] })
+            continue
+          }
+          current.tools.push({ name: message.name, args: message.text })
+          continue
+        }
+        if (current === null) {
+          current = { kind: 'assistant', seq: message.seq, time: message.time, texts: [], tools: [] }
+          turns.push(current)
+        }
+        if (message.text !== '') current.texts.push(message.text)
+        for (const name of message.tools ?? []) {
+          if (!current.tools.some(item => item.name === name && item.args === '')) {
+            current.tools.push({ name, args: '' })
+          }
+        }
       }
-      const isSystem = message.role === 'user' && text.includes('<system-reminder>')
-      if (message.role === 'user' && isSystem !== true) {
-        return h('div', { className: 'stm-msg stm-msg-user' },
-          h('div', { className: 'stm-msg-role' },
-            h('span', null, t('user')),
-            message.time > 0 ? h('span', null, new Date(message.time).toLocaleTimeString('zh-CN', { hour12: false })) : null
-          ),
-          h('div', {
-            className: `stm-msg-text${expanded !== true && text.length > 800 ? ' stm-msg-clamp' : ''}`,
-            onClick: text.length > 800 ? onToggle : undefined,
-            style: text.length > 800 ? { cursor: 'pointer' } : undefined
-          }, text)
-        )
-      }
-      if (isSystem === true) {
-        return h('div', { className: 'stm-msg' },
-          h('div', { className: 'stm-msg-role' }, t('systemBlock')),
-          h('div', {
-            className: `stm-msg-system stm-msg-text${expanded === true ? '' : ' stm-msg-clamp'}`,
-            onClick: onToggle,
-            style: { cursor: 'pointer' }
-          }, text),
-          h('button', { className: 'stm-tab', style: { alignSelf: 'flex-start' }, onClick: onToggle }, expanded ? t('collapseBody') : t('expand'))
-        )
-      }
-      const longAssistant = text.length > 1400
-      return h('div', { className: 'stm-msg' },
-        h('div', { className: 'stm-msg-role' },
-          h('span', null, 'Assistant'),
-          message.time > 0 ? h('span', null, new Date(message.time).toLocaleTimeString('zh-CN', { hour12: false })) : null
+      return turns
+    }
+
+    /** 助手一轮：头像 + 名称 + Markdown 正文 + 可折叠工具调用。 */
+    function AssistantTurn({ turn, expanded, onToggle }) {
+      const text = turn.texts.join('\n\n')
+      const long = text.length > 2400
+      return h('div', { className: 'stm-turn' },
+        h('div', { className: 'stm-turn-head' },
+          h('span', { className: 'stm-avatar' }, 'AI'),
+          h('span', { className: 'stm-turn-name' }, t('assistantName')),
+          turn.time > 0 ? h('span', { className: 'stm-turn-time' }, new Date(turn.time).toLocaleTimeString('zh-CN', { hour12: false })) : null
         ),
         h('div', {
-          className: 'stm-msg-md',
-          style: longAssistant === true && expanded !== true ? { maxHeight: '420px', overflow: 'hidden' } : undefined
+          className: 'stm-turn-body',
+          style: long === true && expanded !== true ? { maxHeight: '520px', overflow: 'hidden' } : undefined
         }, renderMarkdown(text)),
-        longAssistant
-          ? h('button', { className: 'stm-tab', style: { alignSelf: 'flex-start' }, onClick: onToggle }, expanded ? t('collapseBody') : t('expand'))
+        long
+          ? h('button', { className: 'stm-tab', style: { alignSelf: 'flex-start', marginLeft: '30px' }, onClick: onToggle }, expanded ? t('collapseBody') : t('expand'))
           : null,
-        message.tools !== undefined && message.tools.length > 0
-          ? h('div', { className: 'stm-msg-tools' },
-            h('span', null, `${t('tools')}:`),
-            message.tools.map(tool => h('span', { key: tool, className: 'stm-chip' }, tool))
+        turn.tools.length === 0
+          ? null
+          : h('details', { className: 'stm-tools' },
+            h('summary', null, `${t('toolCalls')} ${turn.tools.length}`),
+            h('div', { className: 'stm-tools-body' },
+              turn.tools.map((tool, index) => h('div', { className: 'stm-tool', key: `${tool.name}-${index}`, title: tool.args },
+                `${tool.name}${tool.args === '' ? '' : ` ${tool.args}`}`))
+            )
           )
-          : null
       )
     }
 
-    /** 中间对话区。 */
+    /** 用户一条：右侧气泡。 */
+    function UserTurn({ turn }) {
+      const isSystem = turn.text.includes('<system-reminder>')
+      if (isSystem === true) {
+        const summary = turn.text.split('\n').find(line => line.trim() !== '') ?? t('systemBlock')
+        return h('details', { className: 'stm-sys' },
+          h('summary', null, `${t('injectedHint')} · ${mdToPlain(summary).slice(0, 60)}`),
+          h('div', { className: 'stm-sys-body' }, turn.text)
+        )
+      }
+      return h('div', { className: 'stm-user-row' },
+        h('div', { className: 'stm-user-bubble' }, turn.text),
+        h('div', { className: 'stm-user-meta' },
+          `${t('me')}${turn.time > 0 ? ` · ${new Date(turn.time).toLocaleTimeString('zh-CN', { hour12: false })}` : ''}`)
+      )
+    }
+
+    /** 中间对话区。 */    /** 中间对话区。 */
     function ConversationPane({ state, sessionId, draft, onDraft, onNotice, openSession, sideOpen, onToggleSide, taskCount, reportCount, onSettings }) {
       const member = (state?.team?.members ?? []).find(candidate => candidate.sessionId === sessionId) ?? null
       const [transcript, setTranscript] = useState(null)
