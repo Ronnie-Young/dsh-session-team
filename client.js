@@ -588,9 +588,31 @@ window.__ModuleLoader__.load({
 .stm-chip-btn:hover{background:var(--dsw-alias-bg-layer-3,var(--dsw-alias-bg-layer-2))}
 .stm-chip-btn:active{transform:scale(.96)}
 .stm-chip-btn-icon{display:inline-flex;align-items:center;line-height:1}
-.stm-modal-backdrop{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.28);backdrop-filter:blur(2px);animation:stm-fade-in 140ms ease-out}
+.stm-modal-backdrop{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.26);animation:stm-fade-in 160ms ease-out}
+.stm-modal-backdrop.stm-modal-out{animation:stm-fade-out 140ms ease-in forwards}
+@keyframes stm-fade-out{from{opacity:1}to{opacity:0}}
+.stm-dialog{display:flex;flex-direction:column;min-height:0;max-height:min(78vh,720px)}
+.stm-dialog-body{display:flex;flex-direction:column;gap:12px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:2px 2px 4px}
+.stm-dialog-hint{margin:0;font-size:12px;line-height:1.6;color:var(--dsw-alias-label-secondary)}
+.stm-dialog-empty{padding:20px;text-align:center;font-size:12.5px;color:var(--dsw-alias-label-secondary);border:1px dashed var(--dsw-alias-border-l2);border-radius:10px}
+.stm-field-block{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--dsw-alias-label-secondary);min-width:0}
+.stm-field-block .stm-input,.stm-field-block .stm-select{width:100%;height:32px;box-sizing:border-box}
+.stm-role-card{border-radius:12px;background:var(--dsw-alias-bg-layer-2,transparent);box-shadow:inset 0 0 0 1px rgba(0,0,0,.045);padding:10px 12px;display:flex;flex-direction:column;gap:9px}
+.stm-role-card-head{display:flex;align-items:center;gap:8px}
+.stm-role-card-index{width:18px;height:18px;border-radius:6px;background:var(--stm-brand-weak,transparent);color:var(--stm-brand-hover);font-size:10.5px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-variant-numeric:tabular-nums}
+.stm-role-name{flex:1;min-width:0;font-weight:600}
+.stm-lead-toggle{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--dsw-alias-label-secondary);white-space:nowrap;cursor:pointer}
+.stm-role-remove{border:0;background:transparent;color:var(--dsw-alias-label-secondary);width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition-property:background-color,color;transition-duration:120ms}
+.stm-role-remove:hover{background:var(--stm-danger-weak,transparent);color:var(--stm-danger)}
+.stm-role-card-grid{display:grid;grid-template-columns:1fr 96px 1fr 1fr;gap:8px 10px}
+.stm-span-2{grid-column:span 2}
+.stm-dialog-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:12px;margin-top:12px;border-top:1px solid var(--dsw-alias-border-l1);flex-shrink:0}
+.stm-dialog-foot-right{display:flex;gap:8px}
 @keyframes stm-fade-in{from{opacity:0}to{opacity:1}}
-.stm-modal-card{width:600px;max-width:92vw;max-height:86vh;overflow:auto;background:var(--dsw-alias-bg-layer-1);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 12px 32px -8px rgba(0,0,0,.28),0 32px 64px -16px rgba(0,0,0,.24)}
+.stm-modal-card{width:640px;max-width:92vw;background:var(--dsw-alias-bg-layer-1);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;box-shadow:0 0 0 1px rgba(0,0,0,.06),0 12px 32px -8px rgba(0,0,0,.28),0 32px 64px -16px rgba(0,0,0,.24);animation:stm-modal-in 180ms cubic-bezier(.2,0,0,1)}
+@keyframes stm-modal-in{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:none}}
+.stm-modal-card.stm-modal-out{animation:stm-modal-out 140ms cubic-bezier(.4,0,1,1) forwards}
+@keyframes stm-modal-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(6px) scale(.99)}}
 .stm-drawer.stm-drawer-out{animation:stm-slide-out 200ms cubic-bezier(.2,0,0,1) forwards}
 @keyframes stm-slide-out{from{transform:translateX(0)}to{transform:translateX(100%)}}
 .stm-drawer-backdrop{position:absolute;inset:0;z-index:35;background:transparent}
@@ -1393,7 +1415,8 @@ window.__ModuleLoader__.load({
     }
 
     /** 在已有团队里「添加一行」新建智能体角色（= 新建 session），支持一次加多行。 */
-    function AddAgentRows({ state, onNotice, onDone }) {
+    /** 新建角色弹窗的内容：行状态由父组件持有，避免重渲染丢失。 */
+    function AgentRoleForm({ state, rows, setRows, onNotice, onDone }) {
       const team = state?.team
       const models = state?.models
       const options = modelOptions(models)
@@ -1401,16 +1424,38 @@ window.__ModuleLoader__.load({
       const presetDefault = defaultPresetId(state)
       const fallbackKey = models?.default ? `${models.default.provider}\u0001${models.default.model}` : ''
       const [cwd, setCwd] = useState(team?.cwd || state?.defaultCwd || '')
-      const [rows, setRows] = useState([{ name: '', role: '', stage: 0, lead: false, modelKey: fallbackKey, preset: presetDefault, effort: '' }])
       const [busy, setBusy] = useState(false)
       const canCreate = state?.creations?.canCreate !== false
+      const seq = useRef(rows.length)
 
       useEffect(() => {
         setCwd(team?.cwd || state?.defaultCwd || '')
       }, [team?.id])
 
-      function patch(index, change) {
-        setRows(previous => previous.map((row, i) => i === index ? { ...row, ...change } : row))
+      function addRow() {
+        seq.current += 1
+        setRows(previous => [...previous, {
+          id: `row-${Date.now()}-${seq.current}`,
+          name: '',
+          role: '',
+          stage: previous.length,
+          lead: false,
+          modelKey: fallbackKey,
+          preset: presetDefault,
+          effort: ''
+        }])
+      }
+
+      function patch(id, change) {
+        setRows(previous => previous.map(row => row.id === id ? { ...row, ...change } : row))
+      }
+
+      function removeRow(id) {
+        setRows(previous => previous.filter(row => row.id !== id))
+      }
+
+      function makeLead(id) {
+        setRows(previous => previous.map(row => ({ ...row, lead: row.id === id })))
       }
 
       function submit() {
@@ -1442,15 +1487,14 @@ window.__ModuleLoader__.load({
           onNotice(t('addAgentCreated', { n: (result.created ?? []).length }))
           const failed = (result.created ?? []).filter(item => item.modelError !== '')
           if (failed.length > 0) onNotice(`${failed.map(item => `${item.name}: ${item.modelError}`).join('; ')}`)
-          setRows([{ name: '', role: '', stage: 0, lead: false, modelKey: fallbackKey, preset: presetDefault, effort: '' }])
           if (typeof onDone === 'function') onDone()
         })
       }
 
-      return h('div', { style: { borderTop: '1px solid var(--dsw-alias-border-l1)', marginTop: '6px', paddingTop: '6px' } },
-        h('div', { className: 'stm-hint' }, t('addAgentHint')),
-        h('div', { className: 'stm-inline', style: { marginTop: '8px' } },
-          h('label', { className: 'stm-field', style: { flex: '1' } }, t('cwd'),
+      return h('div', { className: 'stm-dialog' },
+        h('div', { className: 'stm-dialog-body' },
+          h('p', { className: 'stm-dialog-hint' }, t('addAgentHint')),
+          h('label', { className: 'stm-field-block' }, t('cwd'),
             h('input', {
               className: 'stm-input',
               value: cwd,
@@ -1462,82 +1506,101 @@ window.__ModuleLoader__.load({
               (state?.workspaces ?? []).map(workspace =>
                 h('option', { key: workspace.id, value: workspace.path }, workspace.title))
             )
-          )
-        ),
-        rows.length === 0 ? h('div', { className: 'stm-hint', style: { marginTop: '8px' } }, t('rowsEmpty')) : null,
-        rows.map((row, index) => {
-          const rowOption = options.find(option => option.key === row.modelKey) ?? null
-          const rowEfforts = rowOption?.efforts ?? []
-          return h('div', { className: 'stm-inline', key: index, style: { marginTop: '8px' } },
-          h('input', {
-            className: 'stm-input',
-            value: row.name,
-            placeholder: t('memberName'),
-            style: { width: '130px' },
-            onChange: event => patch(index, { name: event.target.value })
-          }),
-          h('input', {
-            className: 'stm-input',
-            value: row.role,
-            placeholder: t('roleLabel'),
-            style: { width: '110px' },
-            onChange: event => patch(index, { role: event.target.value })
-          }),
-          h('input', {
-            className: 'stm-input',
-            value: row.stage,
-            type: 'number',
-            title: t('priorityHint'),
-            style: { width: '64px' },
-            onChange: event => patch(index, { stage: event.target.value })
-          }),
-          options.length === 0
-            ? null
-            : h('select', {
-              className: 'stm-select',
-              value: row.modelKey,
-              style: { width: '180px' },
-              onChange: event => {
-                const key = event.target.value
-                const option = options.find(candidate => candidate.key === key) ?? null
-                patch(index, { modelKey: key, effort: option?.defaultEffort ?? '' })
-              }
-            }, options.map(option => h('option', { value: option.key, key: option.key },
-              `${option.providerName} · ${option.name}`))),
-          rowEfforts.length === 0
-            ? null
-            : h('select', {
-              className: 'stm-select',
-              value: row.effort ?? '',
-              style: { width: '110px' },
-              title: t('effort'),
-              onChange: event => patch(index, { effort: event.target.value })
-            },
-            h('option', { value: '', key: '' }, t('effortDefault')),
-            rowEfforts.map(item => h('option', { value: item.id, key: item.id }, item.name))),
-          presets.length === 0
-            ? null
-            : h('select', {
-              className: 'stm-select',
-              value: row.preset ?? '',
-              style: { width: '120px' },
-              title: t('preset'),
-              onChange: event => patch(index, { preset: event.target.value })
-            }, presets.map(preset => h('option', { value: preset.id, key: preset.id }, preset.name))),
-          h('label', { className: 'stm-inline', style: { gap: '4px', fontSize: '12px' } },
-            h('input', {
-              type: 'checkbox',
-              checked: row.lead === true,
-              onChange: () => setRows(previous => previous.map((candidate, i) => ({ ...candidate, lead: i === index ? !row.lead : false })))
-            }),
-            t('lead')
           ),
-          h(Button, { ghost: true, onClick: () => setRows(previous => previous.filter((_, i) => i !== index)) }, t('removeRow'))
-        )}),
-        h('div', { className: 'stm-inline', style: { marginTop: '10px' } },
-          h(Button, { ghost: true, onClick: () => setRows(previous => [...previous, { name: '', role: '', stage: previous.length, lead: false, modelKey: fallbackKey, preset: presetDefault, effort: '' }]) }, t('addRow')),
-          h(Button, { primary: true, onClick: submit, disabled: busy || !canCreate || cwd.trim() === '' || rows.length === 0 }, busy ? t('creating') : t('addAgentBtn')),
-          h(Button, { ghost: true, onClick: () => { if (typeof onDone === 'function') onDone() } }, t('cancel'))
+          rows.length === 0
+            ? h('div', { className: 'stm-dialog-empty' }, t('rowsEmpty'))
+            : rows.map((row, index) => {
+              const rowOption = options.find(option => option.key === row.modelKey) ?? null
+              const rowEfforts = rowOption?.efforts ?? []
+              return h('div', { className: 'stm-role-card', key: row.id },
+                h('div', { className: 'stm-role-card-head' },
+                  h('span', { className: 'stm-role-card-index' }, `${index + 1}`),
+                  h('input', {
+                    className: 'stm-input stm-role-name',
+                    value: row.name,
+                    placeholder: t('memberName'),
+                    onChange: event => patch(row.id, { name: event.target.value })
+                  }),
+                  h('label', { className: 'stm-lead-toggle' },
+                    h('input', {
+                      type: 'checkbox',
+                      checked: row.lead === true,
+                      onChange: () => makeLead(row.id)
+                    }),
+                    t('lead')
+                  ),
+                  h('button', {
+                    className: 'stm-role-remove',
+                    title: t('removeRow'),
+                    onClick: () => removeRow(row.id)
+                  }, h(Icon, { name: 'close' }))
+                ),
+                h('div', { className: 'stm-role-card-grid' },
+                  h('label', { className: 'stm-field-block' }, t('roleLabel'),
+                    h('input', {
+                      className: 'stm-input',
+                      value: row.role,
+                      placeholder: t('rolePlaceholder'),
+                      onChange: event => patch(row.id, { role: event.target.value })
+                    })
+                  ),
+                  h('label', { className: 'stm-field-block' }, t('stage'),
+                    h('input', {
+                      className: 'stm-input',
+                      value: row.stage,
+                      type: 'number',
+                      title: t('priorityHint'),
+                      onChange: event => patch(row.id, { stage: event.target.value })
+                    })
+                  ),
+                  options.length === 0
+                    ? null
+                    : h('label', { className: 'stm-field-block stm-span-2' }, t('model'),
+                      h('select', {
+                        className: 'stm-select',
+                        value: row.modelKey,
+                        onChange: event => {
+                          const key = event.target.value
+                          const option = options.find(candidate => candidate.key === key) ?? null
+                          patch(row.id, { modelKey: key, effort: option?.defaultEffort ?? '' })
+                        }
+                      }, options.map(option => h('option', { value: option.key, key: option.key },
+                        `${option.providerName} · ${option.name}`)))
+                    ),
+                  rowEfforts.length === 0
+                    ? null
+                    : h('label', { className: 'stm-field-block' }, t('effort'),
+                      h('select', {
+                        className: 'stm-select',
+                        value: row.effort ?? '',
+                        onChange: event => patch(row.id, { effort: event.target.value })
+                      },
+                      h('option', { value: '', key: '' }, t('effortDefault')),
+                      rowEfforts.map(item => h('option', { value: item.id, key: item.id }, item.name)))
+                    ),
+                  presets.length === 0
+                    ? null
+                    : h('label', { className: 'stm-field-block' }, t('preset'),
+                      h('select', {
+                        className: 'stm-select',
+                        value: row.preset ?? '',
+                        onChange: event => patch(row.id, { preset: event.target.value })
+                      }, presets.map(preset => h('option', { value: preset.id, key: preset.id }, preset.name)))
+                    )
+                )
+              )
+            })
+        ),
+        h('div', { className: 'stm-dialog-foot' },
+          h(Button, { ghost: true, onClick: addRow }, t('addRow')),
+          h('div', { className: 'stm-dialog-foot-right' },
+            h(Button, { ghost: true, onClick: () => { if (typeof onDone === 'function') onDone() } }, t('cancel')),
+            h(Button, {
+              primary: true,
+              onClick: submit,
+              disabled: busy || !canCreate || cwd.trim() === '' || rows.length === 0
+            }, busy ? t('creating') : t('addAgentBtn'))
+          )
         )
       )
     }
@@ -2640,6 +2703,9 @@ window.__ModuleLoader__.load({
     function TeamDetail({ state, onBack, onNotice }) {
       const [addOpen, setAddOpen] = useState(false)
       const [agentOpen, setAgentOpen] = useState(false)
+      const [agentClosing, setAgentClosing] = useState(false)
+      const [agentRows, setAgentRows] = useState([])
+      const agentTimer = useRef(null)
       const [busy, setBusy] = useState(false)
       const [draft, setDraft] = useState('')
       const [selectedId, setSelectedId] = useState('')
@@ -2715,6 +2781,34 @@ window.__ModuleLoader__.load({
           setSideClosing(false)
           setSideOpen(false)
         }, 160)
+      }
+
+      function openAgentDialog() {
+        if (agentTimer.current !== null) clearTimeout(agentTimer.current)
+        setAgentClosing(false)
+        const models = state?.models
+        const fallbackKey = models?.default ? `${models.default.provider}\u0001${models.default.model}` : ''
+        const presetDefault = defaultPresetId(state)
+        setAgentRows(previous => previous.length > 0 ? previous : [{
+          id: `row-${Date.now()}`,
+          name: '',
+          role: '',
+          stage: team?.members?.length ?? 0,
+          lead: false,
+          modelKey: fallbackKey,
+          preset: presetDefault,
+          effort: ''
+        }])
+        setAgentOpen(true)
+      }
+
+      function closeAgentDialog() {
+        setAgentClosing(true)
+        if (agentTimer.current !== null) clearTimeout(agentTimer.current)
+        agentTimer.current = setTimeout(() => {
+          setAgentClosing(false)
+          setAgentOpen(false)
+        }, 150)
       }
 
       function openSide() {
@@ -2808,7 +2902,7 @@ window.__ModuleLoader__.load({
               state,
               selectedId: effectiveId,
               onSelect: id => setSelectedId(id),
-              onAdd: () => setAgentOpen(!agentOpen),
+              onAdd: () => { if (agentOpen) closeAgentDialog(); else openAgentDialog() },
               adding: agentOpen,
               onSettings: id => setSettingsId(id)
             }),
@@ -2852,14 +2946,23 @@ window.__ModuleLoader__.load({
                   onClose: () => setSettingsId('')
                 })
             })(),
-          agentOpen
-            ? h('div', { className: 'stm-modal-backdrop' },
-              h('div', { className: 'stm-modal-card' },
-                h('div', { className: 'stm-inline', style: { justifyContent: 'space-between' } },
+          agentOpen || agentClosing
+            ? h('div', {
+              className: `stm-modal-backdrop${agentClosing === true ? ' stm-modal-out' : ''}`,
+              onClick: event => { if (event.target === event.currentTarget) closeAgentDialog() }
+            },
+              h('div', { className: `stm-modal-card${agentClosing === true ? ' stm-modal-out' : ''}` },
+                h('div', { className: 'stm-inline', style: { justifyContent: 'space-between', alignItems: 'flex-start' } },
                   h('h3', { className: 'stm-section-title', style: { margin: 0 } }, t('addAgentTitle')),
-                  h(Button, { ghost: true, onClick: () => setAgentOpen(false) }, t('cancel'))
+                  h('button', { className: 'stm-icon-btn', onClick: closeAgentDialog, title: t('cancel') }, h(Icon, { name: 'close' }))
                 ),
-                h(AddAgentRows, { state, onNotice, onDone: () => setAgentOpen(false) })
+                h(AgentRoleForm, {
+                  state,
+                  rows: agentRows,
+                  setRows: setAgentRows,
+                  onNotice,
+                  onDone: closeAgentDialog
+                })
               )
             )
             : null,
