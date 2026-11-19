@@ -896,6 +896,18 @@ test('给角色发消息 / 中断 / 订阅流式输出', async () => {
   assert.equal(after.watching, false)
 })
 
+test('client.js 里用 h() 引用的组件都有定义（防止改名后白屏）', async () => {
+  const source = await readFile(new URL('../client.js', import.meta.url), 'utf8')
+  const used = new Set([...source.matchAll(/h\(([A-Z][A-Za-z0-9]*)\s*,/g)].map(match => match[1]))
+  const defined = new Set([
+    ...[...source.matchAll(/function\s+([A-Z][A-Za-z0-9]*)\s*\(/g)].map(match => match[1]),
+    ...[...source.matchAll(/class\s+([A-Z][A-Za-z0-9]*)/g)].map(match => match[1]),
+    ...[...source.matchAll(/const\s+([A-Z][A-Za-z0-9]*)\s*=/g)].map(match => match[1]),
+  ])
+  const missing = [...used].filter(name => !defined.has(name))
+  assert.deepEqual(missing, [], `未定义的组件：${missing.join(', ')}`)
+})
+
 test('未知操作返回错误而不是抛出面板路由', async () => {
   const h = await harness(TEAM)
   const payload = await h.callRoute('/session-team/action', {
